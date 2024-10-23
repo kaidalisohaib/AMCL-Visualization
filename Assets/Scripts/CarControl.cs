@@ -23,13 +23,11 @@ public class CarControl : MonoBehaviour
 
         // Find all child GameObjects that have the WheelControl script attached
         wheels = GetComponentsInChildren<WheelControl>();
-        Debug.Log(wheels.Length);
     }
 
     // Update is called once per frame
     void Update()
     {
-
         float vInput = Input.GetAxis("Vertical");
         float hInput = Input.GetAxis("Horizontal");
 
@@ -40,7 +38,7 @@ public class CarControl : MonoBehaviour
 
         // Calculate how close the car is to top speed
         // as a number from zero to one
-        float speedFactor = Mathf.InverseLerp(0, maxSpeed, forwardSpeed);
+        float speedFactor = Mathf.InverseLerp(0, maxSpeed, Mathf.Abs(forwardSpeed));
 
         // Use that to calculate how much torque is available 
         // (zero torque at top speed)
@@ -59,7 +57,7 @@ public class CarControl : MonoBehaviour
             // Apply steering to Wheel colliders that have "Steerable" enabled
             if (wheel.steerable)
             {
-                wheel.WheelCollider.steerAngle = hInput * currentSteerRange;
+                wheel.WheelCollider.steerAngle = Mathf.Lerp(wheel.WheelCollider.steerAngle, hInput * currentSteerRange, 0.8f);
             }
 
             if (isAccelerating)

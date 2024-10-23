@@ -19,6 +19,7 @@ public class WheelControl : MonoBehaviour
     private void Start()
     {
         WheelCollider = GetComponent<WheelCollider>();
+        WheelCollider.ConfigureVehicleSubsteps(5, 12, 15);
     }
 
     // Update is called once per frame
