@@ -8582,14 +8582,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eaaf53856c6a2444baeb3c1d2daefc32, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  nParticles: 500
+  sensorVariance: 10
+  particlePrefab: {fileID: 8140064701145991417, guid: bc1c5a20b3779d1468afdc8ced7aba82, type: 3}
   robot: {fileID: 8317331395158914477}
   mapArea: {fileID: 1709098675}
-  particlePrefab: {fileID: 8140064701145991417, guid: bc1c5a20b3779d1468afdc8ced7aba82, type: 3}
-  nParticles: 1000
   lineRend: {fileID: 1137804220869017904, guid: 38883a30275a2d2488e090da07895a64, type: 3}
+  resamplingThreshold: 0.5
+  useAdaptiveResampling: 1
+  minParticleDistance: 0.1
+  minParticles: 50
+  maxParticles: 500
   PositionNoiseStdDev: 0.2
   OrientationNoiseStdDev: 0.2
-  UpdateInterval: 0.33
+  UpdateInterval: 0.2
+  SensorMaxDistance: 50
+  sensorsParentName: DistanceSensors
+  enableDebugParticles: 0
 --- !u!43 &1510586542
 Mesh:
   m_ObjectHideFlags: 0
@@ -8755,6 +8764,103 @@ Mesh:
     offset: 0
     size: 0
     path: 
+--- !u!1 &1545659728
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1545659730}
+  - component: {fileID: 1545659729}
+  m_Layer: 0
+  m_Name: Directional Light
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!108 &1545659729
+Light:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1545659728}
+  m_Enabled: 1
+  serializedVersion: 11
+  m_Type: 1
+  m_Color: {r: 0.33962262, g: 0.33152387, b: 0.30918473, a: 1}
+  m_Intensity: 1
+  m_Range: 10
+  m_SpotAngle: 30
+  m_InnerSpotAngle: 21.80208
+  m_CookieSize: 10
+  m_Shadows:
+    m_Type: 0
+    m_Resolution: -1
+    m_CustomResolution: -1
+    m_Strength: 1
+    m_Bias: 0.05
+    m_NormalBias: 0.4
+    m_NearPlane: 0.2
+    m_CullingMatrixOverride:
+      e00: 1
+      e01: 0
+      e02: 0
+      e03: 0
+      e10: 0
+      e11: 1
+      e12: 0
+      e13: 0
+      e20: 0
+      e21: 0
+      e22: 1
+      e23: 0
+      e30: 0
+      e31: 0
+      e32: 0
+      e33: 1
+    m_UseCullingMatrixOverride: 0
+  m_Cookie: {fileID: 0}
+  m_DrawHalo: 0
+  m_Flare: {fileID: 0}
+  m_RenderMode: 0
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_RenderingLayerMask: 1
+  m_Lightmapping: 4
+  m_LightShadowCasterMode: 0
+  m_AreaSize: {x: 1, y: 1}
+  m_BounceIntensity: 1
+  m_ColorTemperature: 6570
+  m_UseColorTemperature: 0
+  m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_UseBoundingSphereOverride: 0
+  m_UseViewFrustumForShadowCasterCull: 1
+  m_ForceVisible: 0
+  m_ShadowRadius: 0
+  m_ShadowAngle: 0
+  m_LightUnit: 1
+  m_LuxAtDistance: 1
+  m_EnableSpotReflector: 1
+--- !u!4 &1545659730
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1545659728}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
+  m_LocalPosition: {x: 4.9014926, y: 39.756233, z: -20.67443}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
 --- !u!43 &1596711002
 Mesh:
   m_ObjectHideFlags: 0
@@ -12643,7 +12749,7 @@ Light:
   m_RenderMode: 0
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 119
   m_RenderingLayerMask: 1
   m_Lightmapping: 4
   m_LightShadowCasterMode: 0
@@ -15509,3 +15615,4 @@ SceneRoots:
   - {fileID: 1709098681}
   - {fileID: 1103176827}
   - {fileID: 1470726099}
+  - {fileID: 1545659730}
