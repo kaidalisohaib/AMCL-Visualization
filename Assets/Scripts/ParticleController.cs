@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.ProBuilder;
+using XCharts.Runtime;
 using Random = UnityEngine.Random;
 
 public class ParticleController : MonoBehaviour
@@ -21,6 +22,9 @@ public class ParticleController : MonoBehaviour
 
     [Tooltip("Reference to the robot object in the simulation.")]
     public GameObject robot;
+
+    [Tooltip("Reference to the \"Arrow\" for the probable pos.")]
+    public GameObject probablePos;
 
     [Tooltip("Reference to the map area for boundary constraints.")]
     public GameObject mapArea;
@@ -42,11 +46,11 @@ public class ParticleController : MonoBehaviour
 
     [Header("Adaptive Resampling Settings")]
     [Tooltip("Minimum number of particles during resampling.")]
-    [Range(1, 100)]
+    [Range(1, 200)]
     public int minParticles = 50;
 
     [Tooltip("Maximum number of particles allowed in the filter.")]
-    [Range(100, 1000)]
+    [Range(200, 1000)]
     public int maxParticles = 500;
 
     [Tooltip("Ratio of particles that are randomly placed to prevent false convergence.")]
@@ -73,6 +77,8 @@ public class ParticleController : MonoBehaviour
 
     [Tooltip("Name of the child object containing the sensors on each particle prefab.")]
     public string sensorsParentName = "DistanceSensors";
+
+    public LineChart chart;
 
     // Private fields (no need to show in Inspector)
     private Transform[] robotSensorsOrigins;
@@ -102,6 +108,12 @@ public class ParticleController : MonoBehaviour
 
     private void Start()
     {
+        chart.ClearData();
+        chart.SetMaxCache(20);
+
+
+
+
         mapLayerMask = 1 << MapLayer;
         particleLayerMask = 1 << ParticleLayer;
 
@@ -293,15 +305,21 @@ public class ParticleController : MonoBehaviour
         // Step 3: Compute particle weights based on sensor data likelihood
         CalculateWeight(robotDistances);
 
+        // Step 3.5: Calculate probable position based on weights
+        CalculateProbablePosition();
+
         // Step 4: Resample particles based on weights
         ResampleParticles();
 
         // Step 5: Ensure particles are on the ground
         EnsureParticlesOnGround();
 
+
+
         // Update robot's last known position and angle for next iteration
         lastPosition = robot.transform.position;
         lastAngle = robot.transform.rotation.eulerAngles.y;
+
 
         if (enableDebugParticles && sensorShow != null)
         {
@@ -320,6 +338,33 @@ public class ParticleController : MonoBehaviour
             }
         }
     }
+
+    private void CalculateProbablePosition()
+    {
+        Vector3 weightedPositionSum = Vector3.zero;
+        float weightedOrientationSum = 0f;
+        float totalWeight = 0f;
+
+        // Sum weighted positions and orientations
+        foreach (Particle particle in particles)
+        {
+            weightedPositionSum += particle.position * particle.weight;
+            weightedOrientationSum += particle.orientation * particle.weight;
+            totalWeight += particle.weight;
+        }
+
+        if (totalWeight > 0)
+        {
+            // Calculate the weighted average position and orientation
+            Vector3 probablePosition = weightedPositionSum / totalWeight;
+            float probableOrientation = weightedOrientationSum / totalWeight;
+
+            // Update the probable position GameObject
+            probablePos.transform.position = probablePosition + Vector3.up * shiftUpParticles;
+            probablePos.transform.rotation = Quaternion.Euler(0, probableOrientation, 0);
+        }
+    }
+
 
     // Ensure particles are on the ground, repositioning if necessary
     private void EnsureParticlesOnGround()
@@ -416,71 +461,78 @@ public class ParticleController : MonoBehaviour
         }
     }
 
+    private int resampleFrameCount = 0; // Track frames for periodic chart updates
+
     private void ResampleParticles()
     {
+        // Step 1: Calculate Effective Sample Size (ESS)
         float ess = CalculateEffectiveSampleSize();
+        resampleFrameCount++;
 
-        // Determine the target particle count based on adaptive resampling
-        int targetParticleCount;
-        if (useAdaptiveResampling)
+        // Step 2: Update chart data every 5 frames
+        if (resampleFrameCount % 5 == 0)
         {
-            targetParticleCount = Mathf.RoundToInt(Mathf.Lerp(maxParticles, minParticles, ess / (resamplingThreshold * nParticles)));
+            chart.AddXAxisData("x" + resampleFrameCount);
+            chart.AddData(0, ess);
         }
-        else
-        {
-            targetParticleCount = nParticles;  // Keep particle count constant if adaptive resampling is off
-        }
+
+        // Step 3: Determine target particle count
+        // int targetParticleCount = useAdaptiveResampling
+        //     ? Mathf.RoundToInt(Mathf.Lerp(maxParticles, minParticles, ess / (resamplingThreshold * nParticles)))
+        //     : nParticles;
+
+        int targetParticleCount = nParticles;
         targetParticleCount = Mathf.Clamp(targetParticleCount, minParticles, maxParticles);
 
-        if (ess < resamplingThreshold * nParticles)
+        // Step 4: Perform resampling only if ESS is below the threshold
+        // if (ess >= resamplingThreshold * nParticles)
+        //     return;
+
+        List<Particle> newParticles = new List<Particle>(targetParticleCount);
+        float M_inv = 1.0f / targetParticleCount;
+        float r = Random.Range(0, M_inv);
+        float c = particles[0].weight;
+        int i = 0;
+
+        // Step 5: Calculate number of random particles to inject
+        int randomCount = Mathf.RoundToInt(randomParticleRatio * targetParticleCount);
+
+        // TODO: make the constantly random particles to not disturb the sampling, because now the m is shifted which removes a lot of particles
+        // TODO: KLD sampling (don't know what it is yet but it's for optimization) 
+        for (int m = 0; m < targetParticleCount; m++)
         {
-            List<Particle> newParticles = new List<Particle>(targetParticleCount);
-            float M_inv = 1.0f / targetParticleCount;
-            float r = Random.Range(0, M_inv);
-            float c = particles[0].weight;
-            int i = 0;
+            Particle newParticle;
 
-            // Calculate the number of particles to be randomly positioned
-            int randomCount = Mathf.RoundToInt(randomParticleRatio * targetParticleCount);
-
-            for (int m = 0; m < targetParticleCount; m++)
-            {
-                Particle newParticle;
-
-                // Place a portion of particles at random locations
-                if (m < randomCount)
+            // if (m < randomCount)
+            // {
+            //     // Randomly place a subset of particles
+            //     newParticle = CreateRandomParticle();
+            // }
+            // else
+            // {
+                // Resample based on weights
+                float U = r + m * M_inv;
+                while (U > c && i < particles.Count - 1)
                 {
-                    newParticle = CreateRandomParticle(); // Generate a new particle at a random position
+                    i++;
+                    c += particles[i].weight;
                 }
-                else
-                {
-                    float U = r + m * M_inv;
-                    while (U > c && i < particles.Count - 1)
-                    {
-                        i++;
-                        c += particles[i].weight;
-                    }
-                    newParticle = CloneParticle(particles[i]); // Clone based on existing particles
-                }
+                newParticle = CloneParticleWithNoise(particles[i]); // Add noise to cloned particles
+            // }
 
-                newParticles.Add(newParticle);
-
-                // Update visualization if needed
-                particleObjects[m].transform.position = newParticle.position + Vector3.up * shiftUpParticles;
-                particleObjects[m].transform.rotation = Quaternion.Euler(0, newParticle.orientation, 0);
-                particleObjects[m].SetActive(true);
-            }
-
-            // Deactivate extra particle objects
-            for (int m = targetParticleCount; m < maxParticles; m++)
-            {
-                particleObjects[m].SetActive(false);
-            }
-
-            // Update particle count and objects
-            particles = newParticles;
-            nParticles = targetParticleCount;
+            newParticles.Add(newParticle);
+            UpdateParticleVisualization(particleObjects[m], newParticle); // Update visual representation
         }
+
+        // Step 6: Deactivate unused particle objects
+        for (int m = targetParticleCount; m < maxParticles; m++)
+        {
+            particleObjects[m].SetActive(false);
+        }
+
+        // Step 7: Finalize updates
+        particles = newParticles;
+        nParticles = targetParticleCount;
     }
 
     // Helper function to create a random particle
@@ -504,16 +556,22 @@ public class ParticleController : MonoBehaviour
         return randomParticle;
     }
 
-    // Helper method to clone a particle, instantiate a new particle object, and update sensor origins
-    private Particle CloneParticle(Particle particle)
+    // Helper function to clone a particle with added noise
+    private Particle CloneParticleWithNoise(Particle sourceParticle)
     {
-        // Apply small random noise to position and orientation
-        Vector3 noisyPosition = new Vector3(particle.position.x, 0, particle.position.z);
-        float noisyOrientation = particle.orientation;
+        return new Particle(
+            sourceParticle.position + new Vector3(RandomGaussian(0, PositionNoiseStdDev), 0, RandomGaussian(0, PositionNoiseStdDev)),
+            sourceParticle.orientation + RandomGaussian(0, OrientationNoiseStdDev),
+            sourceParticle.weight
+        );
+    }
 
-        // Clone particle with updated position and orientation
-        Particle newParticle = new Particle(noisyPosition, noisyOrientation, particle.weight); // Uniform weight after resampling
-        return newParticle;
+    // Helper function to update particle visualization
+    private void UpdateParticleVisualization(GameObject particleObject, Particle particle)
+    {
+        particleObject.transform.position = particle.position + Vector3.up * shiftUpParticles;
+        particleObject.transform.rotation = Quaternion.Euler(0, particle.orientation, 0);
+        particleObject.SetActive(true);
     }
 
     // Generate random particles within the map area
@@ -581,7 +639,11 @@ public class ParticleController : MonoBehaviour
     // Utility functions
     private float CalculateEffectiveSampleSize()
     {
-        float weightSquareSum = particles.Sum(p => p.weight * p.weight);
+        float weightSquareSum = 0;
+        for (int i = Mathf.RoundToInt(randomParticleRatio * nParticles); i < nParticles; i++)
+        {
+            weightSquareSum += particles[i].weight * particles[i].weight;
+        }
         return 1.0f / weightSquareSum;
     }
 
