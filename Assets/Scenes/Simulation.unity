@@ -10467,7 +10467,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &791302424
 RectTransform:
   m_ObjectHideFlags: 0
@@ -15195,8 +15195,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eaaf53856c6a2444baeb3c1d2daefc32, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  nParticles: 1000
-  sensorVariance: 15
+  nParticles: 500
+  sensorVariance: 10
   particlePrefab: {fileID: 8140064701145991417, guid: bc1c5a20b3779d1468afdc8ced7aba82, type: 3}
   robot: {fileID: 8317331395158914477}
   probablePos: {fileID: 1136957313}
@@ -15206,14 +15206,13 @@ MonoBehaviour:
   useAdaptiveResampling: 1
   minParticleDistance: 0.1
   minParticles: 200
-  maxParticles: 1000
-  randomParticleRatio: 0.3
+  maxParticles: 500
+  randomParticleRatio: 0.2
   PositionNoiseStdDev: 0.2
   OrientationNoiseStdDev: 0.2
   UpdateInterval: 0.2
   SensorMaxDistance: 50
   sensorsParentName: DistanceSensors
-  chart: {fileID: 791302425}
   enableDebugParticles: 0
 --- !u!43 &1510586542
 Mesh:

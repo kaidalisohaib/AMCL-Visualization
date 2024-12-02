@@ -78,64 +78,63 @@ public class ParticleController : MonoBehaviour
     [Tooltip("Name of the child object containing the sensors on each particle prefab.")]
     public string sensorsParentName = "DistanceSensors";
 
-    public LineChart chart;
+    // public LineChart chart;
 
     // Private fields (no need to show in Inspector)
-    private Transform[] robotSensorsOrigins;
-    private List<Transform[]> sensorsOrigins;
-    private List<Particle> particles;
-    private List<GameObject> particleObjects;
-    private float minX, maxX, minZ, maxZ;
-    private Vector3 lastPosition;
-    private float lastAngle;
-    private LayerMask mapLayerMask;
-    private LayerMask particleLayerMask;
-    private int nSensors = -1;
+    private Transform[] robotSensorsOrigins; // Stores references to the robot's sensors
+    private List<Transform[]> sensorsOrigins; // Stores references to each particle's sensors
+    private List<Particle> particles; // List of particles used in the filter
+    private List<GameObject> particleObjects; // List of GameObjects representing particles
+    private float minX, maxX, minZ, maxZ; // Map boundaries for particle placement
+    private Vector3 lastPosition; // Last known position of the robot
+    private float lastAngle; // Last known orientation of the robot
+    private LayerMask mapLayerMask; // Layer mask for the map
+    private LayerMask particleLayerMask; // Layer mask for particles
+    private int nSensors = -1; // Number of sensors on each particle
 
     // Constants (fixed values not shown in Inspector)
-    private const int MapLayer = 6;
-    private const int ParticleLayer = 7;
-    private const float shiftUpParticles = 0.25f;
+    private const int MapLayer = 6; // Layer number for the map
+    private const int ParticleLayer = 7; // Layer number for particles
+    private const float shiftUpParticles = 0.25f; // Height offset for particle visualization
 
     // Debug fields (hidden unless debugging is enabled)
     [Header("Debug Settings (Optional)")]
     [Tooltip("Show debug particles if enabled.")]
     public bool enableDebugParticles = false;
 
-    private List<Transform> sensorShow = null;
-    private List<LineRenderer> sensorLineRenderShow = null;
-    private GameObject debugParticle = null;
+    private List<Transform> sensorShow = null; // Sensors to show for debugging
+    private List<LineRenderer> sensorLineRenderShow = null; // Line renderers for sensor rays in debug mode
+    private GameObject debugParticle = null; // Debug particle object
 
     private void Start()
     {
-        chart.ClearData();
-        chart.SetMaxCache(20);
+        // chart.ClearData(); // Clear chart data at the start
+        // chart.SetMaxCache(20); // Set maximum cache for chart to 20
 
+        mapLayerMask = 1 << MapLayer; // Set the map layer mask
+        particleLayerMask = 1 << ParticleLayer; // Set the particle layer mask
 
+        nParticles = Mathf.Clamp(nParticles, minParticles, maxParticles); // Clamp the number of particles within allowed limits
 
+        nSensors = particlePrefab.transform.Find(sensorsParentName).childCount; // Get the number of sensors from the particle prefab
+        debugParticle = Instantiate(particlePrefab); // Create a debug particle instance
+        debugParticle.SetActive(false); // Disable debug particle initially
 
-        mapLayerMask = 1 << MapLayer;
-        particleLayerMask = 1 << ParticleLayer;
-
-        nParticles = Mathf.Clamp(nParticles, minParticles, maxParticles);
-
-        nSensors = particlePrefab.transform.Find(sensorsParentName).childCount;
-        debugParticle = Instantiate(particlePrefab);
-        debugParticle.SetActive(false);
-
-        InitializeMapBounds();
-        InitializeParticleSystem();
-        InitializeRobotSensors();
-        InvokeRepeating(nameof(AMCLUpdate), 0.0f, UpdateInterval);
+        InitializeMapBounds(); // Initialize the boundaries of the map
+        InitializeParticleSystem(); // Initialize the particle system
+        InitializeRobotSensors(); // Initialize the sensors on the robot
+        InvokeRepeating(nameof(AMCLUpdate), 0.0f, UpdateInterval); // Schedule periodic updates for the AMCL algorithm
     }
 
     private void Update()
     {
+        // Handle debug particle visualization
         if (enableDebugParticles && Input.GetMouseButtonDown(0))
         {
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, particleLayerMask))
             {
+                // Show sensors for the selected particle
                 Transform sensorsParent = hit.collider.transform.parent.Find(sensorsParentName);
                 sensorShow = new List<Transform>(nSensors);
                 for (int i = 0; i < nSensors; i++)
@@ -144,6 +143,7 @@ public class ParticleController : MonoBehaviour
                 }
                 if (sensorLineRenderShow == null)
                 {
+                    // Create line renderers for visualizing sensor rays
                     sensorLineRenderShow = new List<LineRenderer>(nSensors);
                     for (int i = 0; i < nSensors; i++)
                     {
@@ -153,6 +153,7 @@ public class ParticleController : MonoBehaviour
             }
             else if (sensorShow != null)
             {
+                // Disable sensor visualization if no particle is selected
                 for (int i = 0; i < sensorShow.Count; i++)
                 {
                     sensorLineRenderShow[i].enabled = false;
@@ -166,10 +167,12 @@ public class ParticleController : MonoBehaviour
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, mapLayerMask) && hit.collider.CompareTag(mapArea.tag))
             {
+                // Update debug particle position
                 debugParticle.transform.position = hit.point + Vector3.up * shiftUpParticles;
 
                 if (!debugParticle.activeSelf)
                 {
+                    // Activate debug particle and initialize sensor visualization
                     Transform sensorsParent = debugParticle.transform.Find(sensorsParentName);
 
                     sensorShow = new List<Transform>(nSensors);
@@ -189,6 +192,7 @@ public class ParticleController : MonoBehaviour
                 }
                 for (int i = 0; i < sensorShow.Count; i++)
                 {
+                    // Cast rays from sensors and update line renderers
                     if (Physics.Raycast(sensorShow[i].position, sensorShow[i].up, out RaycastHit hitSensor, SensorMaxDistance, mapLayerMask))
                     {
                         sensorLineRenderShow[i].enabled = true;
@@ -200,21 +204,25 @@ public class ParticleController : MonoBehaviour
                         sensorLineRenderShow[i].enabled = false;
                     }
                 }
-                float[] robotDistances = GetRaycastDistances(robotSensorsOrigins);
-                float[] particleDist = GetRaycastDistances(sensorShow.ToArray());
+                float[] robotDistances = new float[nSensors];
+                GetRaycastDistances(robotSensorsOrigins, robotDistances);
+
+                float[] particleDist = new float[nSensors];
+                GetRaycastDistances(sensorShow.ToArray(), particleDist);
 
                 float weight = 1.0f;
 
+                // Calculate the weight of the particle based on sensor distances (Gaussian likelihood)
                 for (int j = 0; j < robotDistances.Length; j++)
                 {
                     float distanceError = robotDistances[j] - particleDist[j];
                     float a = -(distanceError * distanceError) / (2 * sensorVariance * sensorVariance);
                     weight *= Mathf.Exp(a); // Gaussian likelihood
                 }
-
             }
             else if (sensorShow != null)
             {
+                // Disable sensor visualization if no valid hit
                 for (int i = 0; i < sensorShow.Count; i++)
                 {
                     sensorLineRenderShow[i].enabled = false;
@@ -225,6 +233,7 @@ public class ParticleController : MonoBehaviour
         }
         if (enableDebugParticles && Mathf.Abs(Input.mouseScrollDelta.y) > 0)
         {
+            // Rotate debug particle with mouse scroll
             debugParticle.transform.Rotate(Vector3.up * Input.mouseScrollDelta.y);
         }
     }
@@ -236,6 +245,7 @@ public class ParticleController : MonoBehaviour
         minX = minZ = float.MaxValue;
         maxX = maxZ = float.MinValue;
 
+        // Find the min and max coordinates for the map
         foreach (var vertice in vertices)
         {
             Vector3 pos = vertice.position;
@@ -246,15 +256,36 @@ public class ParticleController : MonoBehaviour
         }
     }
 
+    public void ResetSimulation(string particleCountStr)
+    {
+        int newParticleCount;
+        if (int.TryParse(particleCountStr, out newParticleCount))
+        {
+            nParticles = Mathf.Clamp(newParticleCount, minParticles, maxParticles);
+            InitializeParticleSystem();
+        }
+    }
+
     // Sets up particle objects and sensors for the robot
     private void InitializeParticleSystem()
     {
+        // Clear existing particles and objects
+        if (particleObjects != null)
+        {
+            foreach (var obj in particleObjects)
+            {
+                Destroy(obj);
+            }
+        }
+
         particleObjects = new List<GameObject>(nParticles);
         sensorsOrigins = new List<Transform[]>(nParticles);
         particles = new List<Particle>(nParticles);
+
         lastPosition = robot.transform.position;
         lastAngle = robot.transform.rotation.eulerAngles.y;
 
+        // Initialize particle GameObjects and sensor references
         for (int i = 0; i < maxParticles; i++)
         {
             GameObject particleObj = Instantiate(particlePrefab, Vector3.zero, Quaternion.identity, transform);
@@ -271,11 +302,12 @@ public class ParticleController : MonoBehaviour
             }
             sensorsOrigins.Add(particleSensors);
         }
-        GenerateParticles();
+        GenerateParticles(); // Generate initial particles
     }
 
     private void InitializeRobotSensors()
     {
+        // Initialize references to the robot's sensors
         Transform sensorsParent = robot.transform.Find(sensorsParentName);
         robotSensorsOrigins = new Transform[nSensors];
         for (int i = 0; i < nSensors; i++)
@@ -284,56 +316,59 @@ public class ParticleController : MonoBehaviour
         }
     }
 
-
     private void AMCLUpdate()
     {
         // Step 1: Update particles based on robot's motion (odometry data)
         Vector3 deltaPosition = robot.transform.position - lastPosition;
-        deltaPosition.y = 0;
+        deltaPosition.y = 0f; // Ignore changes in the y-axis (assuming a 2D plane)
         float deltaTheta = robot.transform.rotation.eulerAngles.y - lastAngle;
         Vector3 relativeDeltaPosition = robot.transform.InverseTransformDirection(deltaPosition);
-        if (deltaPosition.magnitude < 0.2)
+
+        if (deltaPosition.sqrMagnitude < 0.04f) // Using sqrMagnitude for efficiency (0.2^2 = 0.04)
         {
-            return;
+            return; // Skip update if robot movement is negligible
         }
 
         UpdateParticlePositions(relativeDeltaPosition, deltaTheta); // Update particle positions
 
         // Step 2: Get robot sensor readings
-        float[] robotDistances = GetRaycastDistances(robotSensorsOrigins);
+        float[] robotDistances = new float[nSensors];
+        GetRaycastDistances(robotSensorsOrigins, robotDistances);
 
         // Step 3: Compute particle weights based on sensor data likelihood
         CalculateWeight(robotDistances);
 
         // Step 3.5: Calculate probable position based on weights
         CalculateProbablePosition();
-
+        
         // Step 4: Resample particles based on weights
         ResampleParticles();
 
         // Step 5: Ensure particles are on the ground
         EnsureParticlesOnGround();
 
-
-
         // Update robot's last known position and angle for next iteration
         lastPosition = robot.transform.position;
         lastAngle = robot.transform.rotation.eulerAngles.y;
 
-
+        // Update sensor visualization for debugging
         if (enableDebugParticles && sensorShow != null)
         {
-            for (int i = 0; i < sensorShow.Count; i++)
+            int sensorCount = sensorShow.Count;
+            for (int i = 0; i < sensorCount; i++)
             {
-                if (Physics.Raycast(sensorShow[i].position, sensorShow[i].up, out RaycastHit hit, SensorMaxDistance, mapLayerMask))
+                Transform sensor = sensorShow[i];
+                LineRenderer lineRenderer = sensorLineRenderShow[i];
+
+                if (Physics.Raycast(sensor.position, sensor.up, out RaycastHit hit, SensorMaxDistance, mapLayerMask))
                 {
-                    sensorLineRenderShow[i].enabled = true;
-                    sensorLineRenderShow[i].SetPosition(0, sensorShow[i].position);
-                    sensorLineRenderShow[i].SetPosition(1, hit.point);
+                    lineRenderer.enabled = true;
+                    lineRenderer.SetPosition(0, sensor.position);
+                    lineRenderer.SetPosition(1, hit.point);
                 }
                 else
                 {
-                    sensorLineRenderShow[i].enabled = false;
+                    lineRenderer.enabled = false;
                 }
             }
         }
@@ -345,32 +380,33 @@ public class ParticleController : MonoBehaviour
         float weightedOrientationSum = 0f;
         float totalWeight = 0f;
 
-        // Sum weighted positions and orientations
-        foreach (Particle particle in particles)
+        int particleCount = particles.Count;
+        for (int i = 0; i < particleCount; i++)
         {
-            weightedPositionSum += particle.position * particle.weight;
-            weightedOrientationSum += particle.orientation * particle.weight;
-            totalWeight += particle.weight;
+            Particle particle = particles[i];
+            float weight = particle.weight;
+            weightedPositionSum += particle.position * weight;
+            weightedOrientationSum += particle.orientation * weight;
+            totalWeight += weight;
         }
 
-        if (totalWeight > 0)
+        if (totalWeight > 0f)
         {
-            // Calculate the weighted average position and orientation
-            Vector3 probablePosition = weightedPositionSum / totalWeight;
-            float probableOrientation = weightedOrientationSum / totalWeight;
+            float invTotalWeight = 1f / totalWeight;
+            Vector3 probablePosition = weightedPositionSum * invTotalWeight;
+            float probableOrientation = weightedOrientationSum * invTotalWeight;
 
-            // Update the probable position GameObject
-            probablePos.transform.position = probablePosition + Vector3.up * shiftUpParticles;
-            probablePos.transform.rotation = Quaternion.Euler(0, probableOrientation, 0);
+            Vector3 shiftUpVector = Vector3.up * shiftUpParticles;
+            probablePos.transform.position = probablePosition + shiftUpVector;
+            probablePos.transform.rotation = Quaternion.Euler(0f, probableOrientation, 0f);
         }
     }
-
 
     // Ensure particles are on the ground, repositioning if necessary
     private void EnsureParticlesOnGround()
     {
-        // Loop through particles and reposition them if not on the ground
-        for (int i = 0; i < particles.Count; i++)
+        int particleCount = particles.Count;
+        for (int i = 0; i < particleCount; i++)
         {
             if (!IsOnGround(particles[i].position))
             {
@@ -390,8 +426,8 @@ public class ParticleController : MonoBehaviour
         // Generate random positions until a valid position is found
         while (true)
         {
-            randomX = Random.Range(minX, maxX); // Define minX and maxX based on your map
-            randomZ = Random.Range(minZ, maxZ); // Define minZ and maxZ based on your map
+            randomX = Random.Range(minX, maxX);
+            randomZ = Random.Range(minZ, maxZ);
             Vector3 rayOrigin = new Vector3(randomX, Camera.main.transform.position.y, randomZ);
             Ray ray = new Ray(rayOrigin, Vector3.down);
 
@@ -399,12 +435,13 @@ public class ParticleController : MonoBehaviour
             if (Physics.Raycast(ray, out hit, Mathf.Infinity, mapLayerMask) && hit.collider.CompareTag(mapArea.tag))
             {
                 // If we hit the ground, set the particle's new position and orientation
-                particle.position = new Vector3(hit.point.x, 0, hit.point.z);
+                particle.position = new Vector3(hit.point.x, 0f, hit.point.z);
                 particle.orientation = Random.Range(0f, 360f); // Random orientation as well
                 particle.weight = 1.0f / nParticles; // Update weight if needed
 
-                particleObjects[index].transform.position = particle.position + Vector3.up * shiftUpParticles;
-                particleObjects[index].transform.rotation = Quaternion.Euler(0, particle.orientation, 0);
+                Vector3 shiftUpVector = Vector3.up * shiftUpParticles;
+                particleObjects[index].transform.position = particle.position + shiftUpVector;
+                particleObjects[index].transform.rotation = Quaternion.Euler(0f, particle.orientation, 0f);
 
                 break; // Exit the loop when a valid position is found
             }
@@ -416,161 +453,167 @@ public class ParticleController : MonoBehaviour
     {
         Vector3 rayOrigin = new Vector3(position.x, Camera.main.transform.position.y, position.z);
         Ray ray = new Ray(rayOrigin, Vector3.down);
-        RaycastHit hit;
-
-        if (Physics.Raycast(ray, out hit, Mathf.Infinity, mapLayerMask) && hit.collider.CompareTag(mapArea.tag))
+        if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, mapLayerMask) && hit.collider.CompareTag(mapArea.tag))
         {
             return true;
         }
         return false;
     }
 
-
     // Improved weight calculation using log-likelihood for numerical stability
     private void CalculateWeight(float[] robotDistances)
     {
+        int particleCount = particles.Count;
+        int numSensors = robotDistances.Length;
+        float invTwoSensorVarianceSquared = 1f / (2f * sensorVariance * sensorVariance);
+
         float totalLogWeight = float.NegativeInfinity;
 
-        for (int i = 0; i < particles.Count; i++)
-        {
-            float[] particleDist = GetRaycastDistances(sensorsOrigins[i]);
-            float logWeight = 0;
+        // Preallocate the particle distance array
+        float[] particleDist = new float[numSensors];
 
-            for (int j = 0; j < robotDistances.Length; j++)
+        for (int i = 0; i < particleCount; i++)
+        {
+            GetRaycastDistances(sensorsOrigins[i], particleDist);
+            float logWeight = 0f;
+
+            // Calculate log weight for each sensor reading
+            for (int j = 0; j < numSensors; j++)
             {
                 float distanceError = robotDistances[j] - particleDist[j];
-                logWeight += -(distanceError * distanceError) / (2 * sensorVariance * sensorVariance);
+                float errorSquared = distanceError * distanceError;
+                logWeight += -errorSquared * invTwoSensorVarianceSquared;
             }
 
             particles[i].weight = logWeight;
-            totalLogWeight = LogSum(totalLogWeight, logWeight);
+            totalLogWeight = LogSum(totalLogWeight, logWeight); // Accumulate log weights for normalization
         }
 
         // Convert log weights back to probabilities and normalize
-        float totalWeight = 0;
-        for (int i = 0; i < particles.Count; i++)
+        float totalWeight = 0f;
+        for (int i = 0; i < particleCount; i++)
         {
-            particles[i].weight = Mathf.Exp(particles[i].weight - totalLogWeight);
-            totalWeight += particles[i].weight;
+            float weight = Mathf.Exp(particles[i].weight - totalLogWeight);
+            particles[i].weight = weight;
+            totalWeight += weight;
         }
 
         // Normalize weights
-        for (int i = 0; i < particles.Count; i++)
+        float invTotalWeight = 1f / totalWeight;
+        for (int i = 0; i < particleCount; i++)
         {
-            particles[i].weight /= totalWeight;
+            particles[i].weight *= invTotalWeight;
         }
     }
 
     private int resampleFrameCount = 0; // Track frames for periodic chart updates
+    private List<Particle> newParticles = new List<Particle>();
 
     private void ResampleParticles()
     {
         // Step 1: Calculate Effective Sample Size (ESS)
-        float ess = CalculateEffectiveSampleSize();
-        resampleFrameCount++;
+        // float ess = CalculateEffectiveSampleSize();
+        // resampleFrameCount++;
 
         // Step 2: Update chart data every 5 frames
-        if (resampleFrameCount % 5 == 0)
-        {
-            chart.AddXAxisData("x" + resampleFrameCount);
-            chart.AddData(0, ess);
-        }
+        // if (resampleFrameCount % 5 == 0)
+        // {
+        //     chart.AddXAxisData("x" + resampleFrameCount);
+        //     chart.AddData(0, ess);
+        // }
 
         // Step 3: Determine target particle count
-        // int targetParticleCount = useAdaptiveResampling
-        //     ? Mathf.RoundToInt(Mathf.Lerp(maxParticles, minParticles, ess / (resamplingThreshold * nParticles)))
-        //     : nParticles;
-
         int targetParticleCount = nParticles;
         targetParticleCount = Mathf.Clamp(targetParticleCount, minParticles, maxParticles);
 
-        // Step 4: Perform resampling only if ESS is below the threshold
-        // if (ess >= resamplingThreshold * nParticles)
-        //     return;
+        // Step 4: Calculate number of random particles to inject
+        int randomCount = Mathf.RoundToInt(randomParticleRatio * targetParticleCount);
+        int resampledCount = targetParticleCount - randomCount;
 
-        List<Particle> newParticles = new List<Particle>(targetParticleCount);
-        float M_inv = 1.0f / targetParticleCount;
-        float r = Random.Range(0, M_inv);
+        // Step 5: Initialize newParticles list
+        newParticles.Clear();
+        newParticles.Capacity = targetParticleCount;
+
+        // Step 6: Generate random particles first
+        for (int m = 0; m < randomCount; m++)
+        {
+            Particle newParticle = CreateRandomParticle();
+            newParticles.Add(newParticle);
+            UpdateParticleVisualization(particleObjects[m], newParticle); // Update visual representation
+            particleObjects[m].SetActive(false); // To not show particles that are randomly placed
+        }
+
+        // Step 7: Perform systematic resampling for the remaining particles
+        float M_inv = 1.0f / resampledCount;
+        float r = Random.Range(0f, M_inv);
         float c = particles[0].weight;
         int i = 0;
 
-        // Step 5: Calculate number of random particles to inject
-        int randomCount = Mathf.RoundToInt(randomParticleRatio * targetParticleCount);
-
-        // TODO: make the constantly random particles to not disturb the sampling, because now the m is shifted which removes a lot of particles
-        // TODO: KLD sampling (don't know what it is yet but it's for optimization) 
-        for (int m = 0; m < targetParticleCount; m++)
+        for (int m = 0; m < resampledCount; m++)
         {
-            Particle newParticle;
-
-            // if (m < randomCount)
-            // {
-            //     // Randomly place a subset of particles
-            //     newParticle = CreateRandomParticle();
-            // }
-            // else
-            // {
-                // Resample based on weights
-                float U = r + m * M_inv;
-                while (U > c && i < particles.Count - 1)
-                {
-                    i++;
-                    c += particles[i].weight;
-                }
-                newParticle = CloneParticleWithNoise(particles[i]); // Add noise to cloned particles
-            // }
-
+            float U = r + m * M_inv;
+            while (U > c && i < particles.Count - 1)
+            {
+                i++;
+                c += particles[i].weight;
+            }
+            Particle newParticle = CloneParticleWithNoise(particles[i]); // Add noise to cloned particles
             newParticles.Add(newParticle);
-            UpdateParticleVisualization(particleObjects[m], newParticle); // Update visual representation
+            UpdateParticleVisualization(particleObjects[m + randomCount], newParticle); // Update visual representation
         }
 
-        // Step 6: Deactivate unused particle objects
+        // Step 8: Deactivate unused particle objects
         for (int m = targetParticleCount; m < maxParticles; m++)
         {
             particleObjects[m].SetActive(false);
         }
 
-        // Step 7: Finalize updates
-        particles = newParticles;
+        // Step 9: Finalize updates
+        particles = new List<Particle>(newParticles); // Create a new list to avoid modifying the original reference
         nParticles = targetParticleCount;
     }
 
     // Helper function to create a random particle
     private Particle CreateRandomParticle()
     {
-        Particle randomParticle = null;
+        float randomX, randomZ;
+        RaycastHit hit;
 
-        while (randomParticle == null)
+        // Generate random positions until a valid position is found
+        while (true)
         {
-            float randomX = Random.Range(minX, maxX);
-            float randomZ = Random.Range(minZ, maxZ);
+            randomX = Random.Range(minX, maxX);
+            randomZ = Random.Range(minZ, maxZ);
             Vector3 rayOrigin = new Vector3(randomX, Camera.main.transform.position.y, randomZ);
             Ray ray = new Ray(rayOrigin, Vector3.down);
-            RaycastHit hit;
 
+            // Perform a raycast to find a valid position on the ground
             if (Physics.Raycast(ray, out hit, Mathf.Infinity, mapLayerMask) && hit.collider.CompareTag(mapArea.tag))
             {
-                randomParticle = new Particle(new Vector3(hit.point.x, 0, hit.point.z), Random.Range(0f, 360f), 1.0f / nParticles);
+                return new Particle(new Vector3(hit.point.x, 0f, hit.point.z), Random.Range(0f, 360f), 1.0f / nParticles);
             }
         }
-        return randomParticle;
     }
 
     // Helper function to clone a particle with added noise
     private Particle CloneParticleWithNoise(Particle sourceParticle)
     {
-        return new Particle(
-            sourceParticle.position + new Vector3(RandomGaussian(0, PositionNoiseStdDev), 0, RandomGaussian(0, PositionNoiseStdDev)),
-            sourceParticle.orientation + RandomGaussian(0, OrientationNoiseStdDev),
-            sourceParticle.weight
-        );
+        float noiseX = RandomGaussian(0f, PositionNoiseStdDev);
+        float noiseZ = RandomGaussian(0f, PositionNoiseStdDev);
+        float noiseTheta = RandomGaussian(0f, OrientationNoiseStdDev);
+
+        Vector3 newPosition = sourceParticle.position + new Vector3(noiseX, 0f, noiseZ);
+        float newOrientation = NormalizeAngle(sourceParticle.orientation + noiseTheta);
+
+        return new Particle(newPosition, newOrientation, sourceParticle.weight);
     }
 
     // Helper function to update particle visualization
     private void UpdateParticleVisualization(GameObject particleObject, Particle particle)
     {
-        particleObject.transform.position = particle.position + Vector3.up * shiftUpParticles;
-        particleObject.transform.rotation = Quaternion.Euler(0, particle.orientation, 0);
+        Vector3 shiftUpVector = Vector3.up * shiftUpParticles;
+        particleObject.transform.position = particle.position + shiftUpVector;
+        particleObject.transform.rotation = Quaternion.Euler(0f, particle.orientation, 0f);
         particleObject.SetActive(true);
     }
 
@@ -579,6 +622,7 @@ public class ParticleController : MonoBehaviour
     {
         particles.Clear();
         int nParticleCreated = 0;
+        Vector3 shiftUpVector = Vector3.up * shiftUpParticles;
 
         while (nParticleCreated < maxParticles)
         {
@@ -586,16 +630,17 @@ public class ParticleController : MonoBehaviour
             float randomZ = Random.Range(minZ, maxZ);
             Vector3 rayOrigin = new Vector3(randomX, Camera.main.transform.position.y, randomZ);
             Ray ray = new Ray(rayOrigin, Vector3.down);
-            RaycastHit hit;
 
-            if (Physics.Raycast(ray, out hit, Mathf.Infinity, mapLayerMask) && hit.collider.CompareTag(mapArea.tag))
+            // Generate particles at valid positions within the map
+            if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, mapLayerMask) && hit.collider.CompareTag(mapArea.tag))
             {
-                Particle particle = new Particle(new Vector3(hit.point.x, 0, hit.point.z), Random.Range(0f, 360f), 1.0f / nParticles);
+                Particle particle = new Particle(new Vector3(hit.point.x, 0f, hit.point.z), Random.Range(0f, 360f), 1.0f / nParticles);
                 particles.Add(particle);
 
-                particleObjects[nParticleCreated].transform.position = particle.position + Vector3.up * shiftUpParticles;
-                particleObjects[nParticleCreated].transform.rotation = Quaternion.Euler(0, particle.orientation, 0);
-                particleObjects[nParticleCreated].SetActive(true); // Show the particle
+                GameObject particleObj = particleObjects[nParticleCreated];
+                particleObj.transform.position = particle.position + shiftUpVector;
+                particleObj.transform.rotation = Quaternion.Euler(0f, particle.orientation, 0f);
+                particleObj.SetActive(true); // Show the particle
                 nParticleCreated++;
             }
         }
@@ -604,27 +649,51 @@ public class ParticleController : MonoBehaviour
     // Update particle positions and orientations based on robot's movement
     private void UpdateParticlePositions(Vector3 deltaPosition, float deltaTheta)
     {
-        for (int i = 0; i < particles.Count; i++)
+        // Precompute constants
+        Vector3 shiftUpVector = Vector3.up * shiftUpParticles;
+        int particleCount = particles.Count;
+
+        for (int i = 0; i < particleCount; i++)
         {
             Particle particle = particles[i];
-            Vector3 noisyDeltaPosition = deltaPosition + new Vector3(RandomGaussian(0, PositionNoiseStdDev), 0, RandomGaussian(0, PositionNoiseStdDev));
-            float noisyDeltaTheta = deltaTheta + RandomGaussian(0, OrientationNoiseStdDev);
 
-            particle.position += particleObjects[i].transform.TransformDirection(noisyDeltaPosition);
+            // Generate noise for position and orientation
+            float noiseX = RandomGaussian(0f, PositionNoiseStdDev);
+            float noiseZ = RandomGaussian(0f, PositionNoiseStdDev);
+            float noiseTheta = RandomGaussian(0f, OrientationNoiseStdDev);
+
+            Vector3 noisyDeltaPosition = deltaPosition + new Vector3(noiseX, 0f, noiseZ);
+            float noisyDeltaTheta = deltaTheta + noiseTheta;
+
+            // Update particle orientation
             particle.orientation = NormalizeAngle(particle.orientation + noisyDeltaTheta);
 
-            // Update particle object's position in the scene
-            particleObjects[i].transform.position = particle.position + Vector3.up * shiftUpParticles;
-            particleObjects[i].transform.rotation = Quaternion.Euler(0, particle.orientation, 0);
+            // Compute rotation quaternion
+            Quaternion particleRotation = Quaternion.Euler(0f, particle.orientation, 0f);
+
+            // Transform noisyDeltaPosition to world space
+            Vector3 worldDeltaPosition = particleRotation * noisyDeltaPosition;
+
+            // Update particle position
+            particle.position += worldDeltaPosition;
+
+            // Update particle object's transform
+            Vector3 newParticlePosition = particle.position + shiftUpVector;
+            particleObjects[i].transform.SetPositionAndRotation(newParticlePosition, particleRotation);
         }
     }
 
-    private float[] GetRaycastDistances(Transform[] sensorsOrigins)
+    private void GetRaycastDistances(Transform[] sensorsOrigins, float[] distances)
     {
-        float[] distances = new float[sensorsOrigins.Length];
-        for (int i = 0; i < sensorsOrigins.Length; i++)
+        int sensorCount = sensorsOrigins.Length;
+        for (int i = 0; i < sensorCount; i++)
         {
-            if (Physics.Raycast(sensorsOrigins[i].position, sensorsOrigins[i].up, out RaycastHit hit, SensorMaxDistance, mapLayerMask))
+            Transform sensor = sensorsOrigins[i];
+            Vector3 origin = sensor.position;
+            Vector3 direction = sensor.up;
+
+            // Perform raycast to determine the distance to obstacles from each sensor
+            if (Physics.Raycast(origin, direction, out RaycastHit hit, SensorMaxDistance, mapLayerMask))
             {
                 distances[i] = hit.distance;
             }
@@ -633,16 +702,17 @@ public class ParticleController : MonoBehaviour
                 distances[i] = SensorMaxDistance; // Set max distance if no hit
             }
         }
-        return distances;
     }
 
     // Utility functions
     private float CalculateEffectiveSampleSize()
     {
-        float weightSquareSum = 0;
-        for (int i = Mathf.RoundToInt(randomParticleRatio * nParticles); i < nParticles; i++)
+        float weightSquareSum = 0f;
+        int startIndex = Mathf.RoundToInt(randomParticleRatio * nParticles);
+        for (int i = startIndex; i < nParticles; i++)
         {
-            weightSquareSum += particles[i].weight * particles[i].weight;
+            float weight = particles[i].weight;
+            weightSquareSum += weight * weight;
         }
         return 1.0f / weightSquareSum;
     }
@@ -658,7 +728,9 @@ public class ParticleController : MonoBehaviour
 
     private float NormalizeAngle(float angle)
     {
-        return (angle % 360 + 360) % 360;
+        angle %= 360f;
+        if (angle < 0f) angle += 360f;
+        return angle;
     }
 
     private float RandomGaussian(float mean, float stdDev)
