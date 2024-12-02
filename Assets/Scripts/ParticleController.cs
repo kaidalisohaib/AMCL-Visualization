@@ -338,11 +338,11 @@ public class ParticleController : MonoBehaviour
         // Step 3: Compute particle weights based on sensor data likelihood
         CalculateWeight(robotDistances);
 
-        // Step 3.5: Calculate probable position based on weights
-        CalculateProbablePosition();
-        
         // Step 4: Resample particles based on weights
         ResampleParticles();
+
+        // Step 3.5: Calculate probable position based on weights
+        CalculateProbablePosition();
 
         // Step 5: Ensure particles are on the ground
         EnsureParticlesOnGround();
@@ -376,18 +376,36 @@ public class ParticleController : MonoBehaviour
 
     private void CalculateProbablePosition()
     {
+        // int topParticleCount = Mathf.Min(particles.Count, particles.Count);
+        int topParticleCount = Mathf.Min(100, particles.Count);
+
+        // Sort particles by weight in descending order
+        if (particles.Count != topParticleCount)
+        {
+            particles.Sort((p1, p2) => p2.weight.CompareTo(p1.weight));
+        }
+
         Vector3 weightedPositionSum = Vector3.zero;
         float weightedOrientationSum = 0f;
         float totalWeight = 0f;
 
-        int particleCount = particles.Count;
-        for (int i = 0; i < particleCount; i++)
+        // Sum weighted positions and orientations of top particles
+        for (int i = 0; i < topParticleCount; i++)
         {
             Particle particle = particles[i];
             float weight = particle.weight;
             weightedPositionSum += particle.position * weight;
             weightedOrientationSum += particle.orientation * weight;
             totalWeight += weight;
+
+            // Activate and update the particle visualization
+            UpdateParticleVisualization(particleObjects[i], particle);
+        }
+
+        // Deactivate the rest of the particle objects
+        for (int i = topParticleCount; i < particleObjects.Count; i++)
+        {
+            // particleObjects[i].SetActive(false);
         }
 
         if (totalWeight > 0f)
@@ -401,6 +419,7 @@ public class ParticleController : MonoBehaviour
             probablePos.transform.rotation = Quaternion.Euler(0f, probableOrientation, 0f);
         }
     }
+
 
     // Ensure particles are on the ground, repositioning if necessary
     private void EnsureParticlesOnGround()
@@ -540,7 +559,7 @@ public class ParticleController : MonoBehaviour
             Particle newParticle = CreateRandomParticle();
             newParticles.Add(newParticle);
             UpdateParticleVisualization(particleObjects[m], newParticle); // Update visual representation
-            particleObjects[m].SetActive(false); // To not show particles that are randomly placed
+            // particleObjects[m].SetActive(false); // To not show particles that are randomly placed
         }
 
         // Step 7: Perform systematic resampling for the remaining particles
