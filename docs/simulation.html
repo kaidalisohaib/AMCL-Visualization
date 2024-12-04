@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AMCL Simulation - Simulation</title>
+  <link rel="shortcut icon" href="TemplateData/favicon.ico">
+  <link rel="stylesheet" href="TemplateData/style.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="index.html">AMCL Simulation</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+        <ul class="navbar-nav">
+          <li class="nav-item">
+            <a class="nav-link" href="index.html">Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="explanation.html">Explanation</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link active" href="simulation.html">Simulation</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Page Header -->
+  <header class="bg-light py-5">
+    <div class="container text-center">
+      <h1 class="display-5">Interactive Simulation</h1>
+      <p class="lead">Experiment with the AMCL algorithm in real-time.</p>
+    </div>
+  </header>
+
+
+  <!-- Main Content -->
+  <main class="container my-5">
+    <!-- Simulation Container -->
+    <div class="row">
+      <div class="col-md-12">
+        <!-- Unity WebGL Build Container -->
+        <div id="unityContainer" style="width: 960px; height: 600px; margin: 0 auto;">
+          <!-- The Unity WebGL content will be embedded here -->
+          <!-- Add any loading animations or messages if needed -->
+          <canvas id="unity-canvas" width=960 height=600 tabindex="-1"></canvas>
+        </div>
+      </div>
+    </div>
+    <!-- Simulation Controls -->
+    <!-- <div class="row mb-4">
+      <div class="col-md-6">
+        <label for="particleSlider" class="form-label">Number of Particles:</label>
+        <input type="range" class="form-range" id="particleSlider" min="10" max="1000" value="100" step="10"
+          oninput="updateParticleCount(this.value)">
+        <span id="particleCount" class="fw-bold">100</span>
+      </div>
+      <div class="col-md-6 text-md-end">
+        <button class="btn btn-primary" onclick="resetSimulation()">Reset Simulation</button>
+      </div>
+    </div> -->
+  </main>
+
+  <!-- <div id="unity-container" class="unity-desktop">
+    <div id="unity-loading-bar">
+      <div id="unity-logo"></div>
+      <div id="unity-progress-bar-empty">
+        <div id="unity-progress-bar-full"></div>
+      </div>
+    </div>
+    <div id="unity-warning"> </div>
+    <div id="unity-footer">
+      <div id="unity-logo-title-footer"></div>
+      <div id="unity-fullscreen-button"></div>
+      <div id="unity-build-title">AMCL-Visualization</div>
+    </div>
+  </div> -->
+
+  <!-- Footer -->
+  <footer class="bg-primary text-white text-center py-3">
+    <p>&copy; 2024 Sohaib Kaidali. All rights reserved.</p>
+  </footer>
+
+  <!-- Bootstrap JS and dependencies (Popper.js) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    var canvas = document.querySelector("#unity-canvas");
+
+    // Shows a temporary message banner/ribbon for a few seconds, or
+    // a permanent error message on top of the canvas if type=='error'.
+    // If type=='warning', a yellow highlight color is used.
+    // Modify or remove this function to customize the visually presented
+    // way that non-critical warnings and error messages are presented to the
+    // user.
+    function unityShowBanner(msg, type) {
+      var warningBanner = document.querySelector("#unity-warning");
+      function updateBannerVisibility() {
+        warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
+      }
+      var div = document.createElement('div');
+      div.innerHTML = msg;
+      warningBanner.appendChild(div);
+      if (type == 'error') div.style = 'background: red; padding: 10px;';
+      else {
+        if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
+        setTimeout(function () {
+          warningBanner.removeChild(div);
+          updateBannerVisibility();
+        }, 5000);
+      }
+      updateBannerVisibility();
+    }
+
+    var buildUrl = "Build";
+    var loaderUrl = buildUrl + "/WebBuild.loader.js";
+    var config = {
+      arguments: [],
+      dataUrl: buildUrl + "/WebBuild.data.unityweb",
+      frameworkUrl: buildUrl + "/WebBuild.framework.js.unityweb",
+      codeUrl: buildUrl + "/WebBuild.wasm.unityweb",
+      streamingAssetsUrl: "StreamingAssets",
+      companyName: "DefaultCompany",
+      productName: "AMCL-Visualization",
+      productVersion: "0.1",
+      showBanner: unityShowBanner,
+    };
+
+    // By default, Unity keeps WebGL canvas render target size matched with
+    // the DOM size of the canvas element (scaled by window.devicePixelRatio)
+    // Set this to false if you want to decouple this synchronization from
+    // happening inside the engine, and you would instead like to size up
+    // the canvas DOM size and WebGL render target sizes yourself.
+    // config.matchWebGLToCanvasSize = false;
+
+    // If you would like all file writes inside Unity Application.persistentDataPath
+    // directory to automatically persist so that the contents are remembered when
+    // the user revisits the site the next time, uncomment the following line:
+    // config.autoSyncPersistentDataPath = true;
+    // This autosyncing is currently not the default behavior to avoid regressing
+    // existing user projects that might rely on the earlier manual
+    // JS_FileSystem_Sync() behavior, but in future Unity version, this will be
+    // expected to change.
+
+    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+      // Mobile device style: fill the whole browser client area with the game canvas:
+
+      var meta = document.createElement('meta');
+      meta.name = 'viewport';
+      meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
+      document.getElementsByTagName('head')[0].appendChild(meta);
+      document.querySelector("#unity-container").className = "unity-mobile";
+      canvas.className = "unity-mobile";
+
+      // To lower canvas resolution on mobile devices to gain some
+      // performance, uncomment the following line:
+      // config.devicePixelRatio = 1;
+
+
+    } else {
+      // Desktop style: Render the game canvas in a window that can be maximized to fullscreen:
+      canvas.style.width = "960px";
+      canvas.style.height = "600px";
+    }
+
+    //document.querySelector("#unity-loading-bar").style.display = "block";
+
+    var script = document.createElement("script");
+    script.src = loaderUrl;
+    script.onload = () => {
+      createUnityInstance(canvas, config, (progress) => {
+        //document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
+      }).then((unityInstance) => {
+        //document.querySelector("#unity-loading-bar").style.display = "none";
+        //document.querySelector("#unity-fullscreen-button").onclick = () => {
+        //  unityInstance.SetFullscreen(1);
+        //};
+
+      }).catch((message) => {
+        alert(message);
+      });
+    };
+
+    document.body.appendChild(script);
+
+    // Update Particle Count Display
+    function updateParticleCount(value) {
+      document.getElementById('particleCount').innerText = value;
+    }
+
+    // Placeholder function for Reset Simulation (remove if using Unity)
+    function resetSimulation() {
+      alert('Simulation reset with ' + document.getElementById('particleCount').innerText + ' particles.');
+    }
+  </script>
+</body>
+
+</html>
