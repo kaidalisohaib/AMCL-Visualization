@@ -3,45 +3,157 @@
 
 <head>
     <!-- Required meta tags -->
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>AMCL Simulation - Home</title>
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Custom CSS (optional) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- Custom CSS -->
     <style>
         html,
         body {
             height: 100%;
             margin: 0;
+            display: flex;
+            flex-direction: column;
+            background: #121212;
+            color: #e0e0e0;
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            line-height: 1.5;
         }
 
         body {
-            display: flex;
-            flex-direction: column;
+            padding-top: 4.5rem;
+            /* Space for fixed navbar */
+        }
+
+        /* Navbar dark theme */
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1030;
+            background: #1f1f1f;
+            border-bottom: 1px solid #333;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar .navbar-brand {
+            color: #0dcaf0 !important;
+            font-weight: 600;
+        }
+
+        .navbar .nav-link {
+            color: #f0f0f0 !important;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .navbar .nav-link:hover,
+        .navbar .nav-link.active {
+            color: #0dcaf0 !important;
+        }
+
+        /* Hero Section */
+        header {
+            background: linear-gradient(to bottom right, #1c1c1c, #2a2a2a);
+            padding: 5rem 0;
+            text-align: center;
+        }
+
+        header .display-4 {
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #0dcaf0;
+        }
+
+        header .lead {
+            font-size: 1.25rem;
+            font-weight: 400;
+            max-width: 600px;
+            margin: 0 auto 2rem;
+            line-height: 1.6;
+            color: #f0f0f0;
+        }
+
+        header .btn-primary.btn-lg {
+            padding: 0.75rem 1.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            background-color: #0dcaf0;
+            border: none;
+        }
+
+        header .btn-primary.btn-lg:hover {
+            background-color: #0bb0e0;
         }
 
         main {
             flex: 1;
         }
 
+        main h2 {
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: #0dcaf0;
+        }
+
+        main p {
+            max-width: 700px;
+            line-height: 1.7;
+            color: #e0e0e0;
+        }
+
+        main a.btn-secondary {
+            margin-top: 1rem;
+            background: #2a2a2a;
+            border: none;
+            color: #f0f0f0;
+        }
+
+        main a.btn-secondary:hover {
+            background: #333;
+            color: #0dcaf0;
+        }
+
         footer {
-            position: relative;
+            background: #1f1f1f;
+            color: #999;
+            text-align: center;
+            padding: 1rem 0;
+            margin-top: auto;
+            border-top: 1px solid #333;
+            box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        footer p {
+            margin: 0;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 576px) {
+            header .display-4 {
+                font-size: 2rem;
+            }
+
+            header .lead {
+                font-size: 1.1rem;
+            }
         }
     </style>
 </head>
 
 <body>
-
     <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="index.html">AMCL Simulation</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand fw-bold" href="index.html">AMCL Simulation</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain"
+                aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon" style="filter: invert(100%);"></span>
             </button>
-            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+            <div class="collapse navbar-collapse justify-content-end" id="navbarMain">
                 <ul class="navbar-nav">
                     <li class="nav-item">
                         <a class="nav-link" href="explanation.html">Explanation</a>
@@ -55,24 +167,28 @@
     </nav>
 
     <!-- Hero Section -->
-    <header class="bg-light py-5">
-        <div class="container text-center">
+    <header>
+        <div class="container">
             <h1 class="display-4">Adaptive Monte Carlo Localization (AMCL)</h1>
-            <p class="lead">An interactive exploration of probabilistic robotics and localization algorithms.</p>
+            <p class="lead">An interactive exploration of probabilistic robotics and localization algorithms, bridging
+                theory and practice.</p>
             <a href="simulation.html" class="btn btn-primary btn-lg">Try the Simulation</a>
         </div>
     </header>
 
     <!-- Main Content -->
     <main class="container my-5">
-        <div class="row">
-            <!-- Introduction -->
-            <div class="col-md-12">
+        <div class="row justify-content-center">
+            <div class="row col-md-10 text-center justify-content-center">
                 <h2>Welcome to the AMCL Simulation Project</h2>
-                <p>
-                    <!-- Add your introductory content here -->
-                    This project demonstrates the principles of Adaptive Monte Carlo Localization using interactive
-                    simulations and explanations.
+                <p class="col-md-10 text-center justify-content-center">
+                    Discover how probabilistic methods empower robots to understand their environment, estimate their
+                    positions,
+                    and adapt to uncertainty. This project not only demonstrates the AMCL algorithm through an
+                    interactive simulation
+                    but also provides in-depth explanations, connecting the mathematical underpinnings of Bayesian
+                    inference and
+                    Monte Carlo methods to real-world robotic applications.
                 </p>
                 <a href="explanation.html" class="btn btn-secondary">Learn More</a>
             </div>
@@ -80,12 +196,13 @@
     </main>
 
     <!-- Footer -->
-    <footer class="bg-primary text-white text-center py-3">
+    <footer>
         <p>&copy; 2024 Sohaib Kaidali. All rights reserved.</p>
     </footer>
 
     <!-- Bootstrap JS and dependencies (Popper.js) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
+    </script>
     <!-- Custom JS (optional) -->
     <script src="script.js"></script>
 </body>

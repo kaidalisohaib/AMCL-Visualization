@@ -7,1268 +7,1874 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AMCL Simulation - Explanation</title>
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Custom CSS (optional) -->
-    <link rel="stylesheet" href="styles.css">
+    <!-- MathJax -->
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
     </script>
+
+    <style>
+        body {
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            line-height: 1.5;
+            padding-top: 4.5rem;
+            margin: 0;
+            background: #121212;
+            color: #e0e0e0;
+            scroll-behavior: smooth;
+        }
+
+        /* Navbar dark theme */
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1030;
+            background: #1f1f1f;
+            border-bottom: 1px solid #333;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar .navbar-brand {
+            color: #0dcaf0 !important;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+
+        .navbar .nav-link {
+            color: #f0f0f0 !important;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .navbar .nav-link.active,
+        .navbar .nav-link:hover {
+            color: #0dcaf0 !important;
+        }
+
+        /* Sidebar styling (TOC) */
+        .sidebar {
+            background: #1c1c1c;
+            border-right: 1px solid #333;
+            min-height: 100vh;
+        }
+
+        .sidebar h5 {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #0dcaf0;
+        }
+
+        .sidebar .nav-link {
+            color: #ccc;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+
+        .sidebar .nav-link:hover {
+            color: #0dcaf0;
+            background: #222;
+        }
+
+        .sidebar .nav-link.active {
+            background-color: #222;
+            font-weight: 600;
+            border-left: 4px solid #0dcaf0;
+            color: #0dcaf0;
+        }
+
+        main {
+            background-color: #121212;
+        }
+
+        h2,
+        h4,
+        h5 {
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            color: #0dcaf0;
+        }
+
+        p,
+        ul,
+        ol {
+            color: #e0e0e0;
+        }
+
+        a {
+            color: #0dcaf0;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* Section spacing */
+        section {
+            margin-bottom: 2rem;
+        }
+
+        /* Smooth anchor scrolling is already set via scroll-behavior in body */
+    </style>
 </head>
 
-<body>
+<body data-bs-spy="scroll" data-bs-target="#toc-nav" data-bs-offset="100" tabindex="0">
     <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <nav class="navbar navbar-expand-lg">
         <div class="container-fluid">
             <a class="navbar-brand" href="index.html">AMCL Simulation</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain"
+                aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon" style="filter: invert(100%);"></span>
             </button>
-            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+            <div class="collapse navbar-collapse justify-content-end" id="navbarMain">
                 <ul class="navbar-nav">
                     <li class="nav-item">
-                        <a class="nav-link" href="index.html">Home</a>
+                        <a class="nav-link px-3" href="index.html">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active" href="explanation.html">Explanation</a>
+                        <a class="nav-link active px-3" href="explanation.html">Explanation</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="simulation.html">Simulation</a>
+                        <a class="nav-link px-3" href="simulation.html">Simulation</a>
                     </li>
                 </ul>
             </div>
         </div>
     </nav>
 
-    <!-- Page Header -->
-    <header class="bg-light py-5">
-        <div class="container text-center">
-            <h1 class="display-5">Understanding AMCL</h1>
-            <p class="lead">Dive deep into the theory behind Adaptive Monte Carlo Localization.</p>
-        </div>
-    </header>
+    <!-- Content Wrapper -->
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar TOC -->
+            <nav id="toc-nav" class="col-md-3 col-lg-2 d-none d-md-block sidebar pt-4">
+                <div class="position-sticky" style="top: 100px;">
+                    <h5 class="px-3">Table of Contents</h5>
+                    <nav class="nav flex-column">
+                        <a class="nav-link" href="#introduction">1. Introduction</a>
+                        <a class="nav-link" href="#theoretical-background">2. Theoretical Background</a>
+                        <a class="nav-link" href="#monte-carlo-localization">3. Monte Carlo Localization</a>
+                        <a class="nav-link" href="#particle-filter">4. Particle Filter</a>
+                        <a class="nav-link" href="#adaptive-monte-carlo-localization">5. AMCL</a>
+                        <a class="nav-link" href="#simulation">6. The Simulation</a>
+                        <a class="nav-link" href="#code-walkthrough">7. Code Walkthrough</a>
+                        <a class="nav-link" href="#analysis-discussion">8. Analysis and Discussion</a>
+                        <a class="nav-link" href="#conclusion">9. Conclusion</a>
+                        <a class="nav-link" href="#references">10. References</a>
+                        <a class="nav-link" href="#appendices">11. Appendices</a>
+                    </nav>
+                </div>
+            </nav>
 
-    <!-- Main Content -->
-    <main class="container my-5">
-        <!-- Explanation Page Content -->
+            <!-- Main Content -->
+            <main class="col-md-9 col-lg-10 ms-sm-auto px-4 py-5">
+                <!-- Explanation Page Content -->
 
-        <!-- Introduction Section -->
-        <section class="mb-5">
-            <h2>Introduction</h2>
-            <p>
-                Adaptive Monte Carlo Localization (AMCL) is a probabilistic algorithm used in robotics for estimating a
-                robot's position and orientation (collectively known as its <strong>pose</strong>) within a known map.
-                The purpose of this project is to demonstrate the principles of AMCL through an interactive simulation
-                and to explain how it relates to concepts in probability and statistics.
-            </p>
-            <p>
-                Localization is a fundamental problem in robotics: knowing where the robot is within its environment is
-                essential for navigation and task execution. AMCL addresses this problem by using a set of hypotheses
-                (called <em>particles</em>) to represent possible robot poses, updating them over time based on movement
-                and sensor data.
-            </p>
-            <p>
-                This project not only showcases the implementation of AMCL but also delves into the theoretical
-                underpinnings that make it an effective solution for robot localization. By exploring the algorithm, we
-                aim to bridge the gap between theoretical concepts in probability and their practical applications in
-                robotics.
-            </p>
-        </section>
-
-        <!-- Theoretical Background Section -->
-        <section class="mb-5">
-            <h2>Theoretical Background</h2>
-            <p>
-                To understand AMCL, it's important to have a grasp of several key concepts in probability, statistics,
-                and robotics. This section covers the fundamental principles that underpin the algorithm.
-            </p>
-
-            <!-- Probability and Random Variables -->
-            <h3>Probability and Random Variables</h3>
-            <p>
-                A <strong>random variable</strong> is a variable whose possible values are numerical outcomes of a
-                random phenomenon. In robotics, randomness arises due to uncertainties in motion and sensor
-                measurements. Probability distributions describe how likely different outcomes are. The <strong>Gaussian
-                    (normal) distribution</strong> is particularly important because many types of noise in measurements
-                and motion are modeled as Gaussian distributions.
-            </p>
-
-            <!-- Bayes' Theorem -->
-            <h3>Bayes' Theorem</h3>
-            <p>
-                <strong>Bayes' Theorem</strong> provides a mathematical framework for updating the probability estimate
-                for a hypothesis as more evidence or information becomes available. It is expressed as:
-            </p>
-            <div class="text-center">
-                <img src="images/bayes_theorem.png" alt="Bayes' Theorem Formula" style="max-width: 100%; height: auto;">
-                <!-- If you prefer to write the formula in HTML, you can use MathJax or similar libraries -->
-            </div>
-            <p>
-                In the context of localization, Bayes' Theorem allows us to update our belief about the robot's position
-                based on new sensor data.
-            </p>
-
-            <!-- Monte Carlo Methods -->
-            <h3>Monte Carlo Methods</h3>
-            <p>
-                <strong>Monte Carlo methods</strong> are a class of computational algorithms that rely on repeated
-                random sampling to obtain numerical results. They are used to model phenomena with significant
-                uncertainty in inputs, such as the prediction of complex physical and mathematical systems.
-            </p>
-
-            <!-- Particle Filters -->
-            <h3>Particle Filters</h3>
-            <p>
-                A <strong>particle filter</strong> is an implementation of a Monte Carlo method used for estimating the
-                state of a system that changes over time. In robotics, particle filters are used to represent the
-                probability distribution of a robot's pose with a set of particles, each representing a possible state.
-            </p>
-
-            <!-- States, Controls, and Observations -->
-            <h3>States, Controls, and Observations</h3>
-            <p>
-                Understanding AMCL requires knowledge of three fundamental components:
-            </p>
-            <ul>
-                <li>
-                    <strong>State (\(x_t\)):</strong> The robot's pose at time <em>t</em>, including position and
-                    orientation.
-                </li>
-                <li>
-                    <strong>Control (\(u_t\)):</strong> The movement commands given to the robot, such as velocity and
-                    rotation.
-                </li>
-                <li>
-                    <strong>Observation (\(z_t\)):</strong> Sensor measurements obtained by the robot at time
-                    <em>t</em>, like distance readings from a LIDAR sensor.
-                </li>
-            </ul>
-
-            <!-- Motion Model -->
-            <h3>Motion Model</h3>
-            <p>
-                The <strong>motion model</strong> describes how the robot's state changes over time in response to
-                control inputs. It accounts for uncertainties in motion due to factors like wheel slippage or uneven
-                terrain. The motion model is represented probabilistically as:
-            </p>
-            <div class="text-center">
-                <img src="images/motion_model.png" alt="Motion Model Formula" style="max-width: 100%; height: auto;">
-            </div>
-            <p>
-                This represents the probability of being in state \( x_t \) given the previous state \( x_{t-1} \) and
-                control \( u_t \).
-            </p>
-
-            <!-- Sensor Model -->
-            <h3>Sensor Model</h3>
-            <p>
-                The <strong>sensor model</strong> describes how likely a certain observation is, given a particular
-                state. It accounts for uncertainties and noise in sensor measurements. It is represented as:
-            </p>
-            <div class="text-center">
-                <img src="images/sensor_model.png" alt="Sensor Model Formula" style="max-width: 100%; height: auto;">
-            </div>
-            <p>
-                This represents the probability of observing \( z_t \) given the state \( x_t \).
-            </p>
-
-            <!-- Belief Representation -->
-            <h3>Belief Representation</h3>
-            <p>
-                The robot's <strong>belief</strong> about its state is represented as a probability distribution over
-                all possible states. This distribution is updated over time as the robot moves and receives new sensor
-                data.
-            </p>
-            <p>
-                The belief at time \( t \) is denoted as:
-            </p>
-            <div class="text-center">
-                <img src="images/belief_representation.png" alt="Belief Representation Formula"
-                    style="max-width: 100%; height: auto;">
-            </div>
-
-            <!-- Bayes Filter Algorithm -->
-            <h3>Bayes Filter Algorithm</h3>
-            <p>
-                The <strong>Bayes filter</strong> provides a recursive framework for updating the belief over time. It
-                consists of two main steps:
-            </p>
-            <ol>
-                <li>
-                    <strong>Prediction:</strong> Update the belief based on the motion model and control input.
-                    <div class="text-center">
-                        <img src="images/prediction_step.png" alt="Prediction Step Formula"
-                            style="max-width: 100%; height: auto;">
-                    </div>
+                <!-- Introduction Section -->
+                <section id="introduction" class="mb-5">
+                    <h2>Introduction</h2>
                     <p>
-                        This step predicts the new state distribution \( \overline{bel}(x_t) \) by integrating over all
-                        possible previous states.
+                        Robotics, as an interdisciplinary field, combines mechanical engineering, electronics, computer
+                        science,
+                        and mathematics to design and operate autonomous systems. One of the most critical challenges in
+                        robotics is localization—accurately determining a robot's position and orientation (collectively
+                        known
+                        as its <strong>pose</strong>) within its environment. Localization is the cornerstone of
+                        autonomous
+                        navigation, enabling robots to interact meaningfully with their surroundings, execute tasks
+                        efficiently,
+                        and avoid obstacles.
                     </p>
-                </li>
-                <li>
-                    <strong>Correction:</strong> Update the belief based on the sensor model and new observations.
-                    <div class="text-center">
-                        <img src="images/correction_step.png" alt="Correction Step Formula"
-                            style="max-width: 100%; height: auto;">
-                    </div>
                     <p>
-                        Here, \( \eta \) is a normalization factor ensuring that the total probability sums to one. This
-                        step refines the predicted belief using the latest sensor data.
+                        Adaptive Monte Carlo Localization (AMCL) is a state-of-the-art probabilistic algorithm widely
+                        used to
+                        solve the localization problem. It is particularly effective for mobile robots navigating within
+                        a known
+                        map. AMCL leverages the principles of probability and statistics to maintain and refine a
+                        robot's belief
+                        about its position over time. The algorithm employs a particle filter, a Monte Carlo-based
+                        method that
+                        represents the robot's belief as a set of weighted particles, each corresponding to a possible
+                        pose.
+                        These particles are updated iteratively using motion models, sensor data, and probabilistic
+                        reasoning,
+                        allowing the robot to converge on its true pose despite uncertainties in movement and sensor
+                        readings.
                     </p>
-                </li>
-            </ol>
-            <p>
-                By repeatedly applying these steps, the robot can continually update its belief about its position in
-                the environment.
-            </p>
-        </section>
-
-
-        <!-- Monte Carlo Localization Section -->
-        <section class="mb-5">
-            <h2>Monte Carlo Localization</h2>
-            <p>
-                Monte Carlo Localization (MCL) is a probabilistic algorithm used for robot localization, where the
-                robot's position and orientation (pose) are estimated within a known map. MCL utilizes a set of weighted
-                hypotheses, called <em>particles</em>, to represent the robot's possible poses.
-            </p>
-
-            <!-- States, Controls, and Observations -->
-            <h3>States, Controls, and Observations</h3>
-            <p>
-                To understand MCL, it's important to define three key components:
-            </p>
-            <ul>
-                <li>
-                    <strong>State (\( x_t \)):</strong> The state is the collection of all aspects of the robot (and its
-                    environment) that completely describes its future. In MCL, the state is the robot's pose,
-                    represented by its position and orientation:
-                    \[
-                    x_t = (x, y, \theta)
-                    \]
-                    The environment is typically represented by a fixed map.
-                </li>
-                <li>
-                    <strong>Controls (\( u_t \)):</strong> Controls are the variables that enact the change of state.
-                    For MCL, the control data consists of the robot's linear and angular velocities:
-                    \[
-                    u_t = (v, \omega)
-                    \]
-                    These controls influence how the robot moves from one state to another.
-                </li>
-                <li>
-                    <strong>Observations (\( z_t \)):</strong> Observations are measurement data that provide
-                    information about the current state. In MCL, observations are range data obtained from sensors like
-                    LIDAR:
-                    \[
-                    z_t = \text{LIDAR measurements}
-                    \]
-                    These observations help the robot refine its belief about its position within the map.
-                </li>
-            </ul>
-            <p>
-                The robot operates in discrete time steps \( t_0, t_1, \ldots, t_n \). At each time step, the robot
-                updates its state based on controls and observations.
-            </p>
-
-            <!-- General Model for Dynamics and Observations -->
-            <h3>General Model for Dynamics and Observations</h3>
-            <p>
-                The MCL algorithm relies on probabilistic models to describe how the state evolves over time and how
-                observations are generated:
-            </p>
-            <ul>
-                <li>
-                    <strong>State Evolution Model:</strong> The new state \( x_t \) is generated from the previous state
-                    \( x_{t-1} \) and the control \( u_t \):
-                    \[
-                    p(x_t | x_{t-1}, u_t)
-                    \]
-                    This transition model incorporates the uncertainties in the robot's motion, such as wheel slippage
-                    or uneven terrain. It is based on the Markov property, implying that the next state depends only on
-                    the current state and control input.
-                </li>
-                <li>
-                    <strong>Observation Model:</strong> The observation \( z_t \) is generated from the current state \(
-                    x_t \):
-                    \[
-                    p(z_t | x_t)
-                    \]
-                    This model describes the likelihood of receiving a particular observation given the robot's state.
-                    It accounts for sensor noise and inaccuracies.
-                </li>
-            </ul>
-            <p>
-                These models enable the robot to predict its future state and update its belief based on new
-                observations.
-            </p>
-
-            <!-- Belief Representation -->
-            <h3>Belief Representation</h3>
-            <p>
-                The robot's <strong>belief</strong> about its state at time \( t \) is represented as a probability
-                distribution over all possible states, given all past controls and observations:
-            </p>
-            <div class="text-center">
-                \( bel(x_t) = p(x_t | z_{1:t}, u_{1:t}) \)
-            </div>
-            <p>
-                This belief combines all the information the robot has gathered to describe the probability of being in
-                any particular state.
-            </p>
-
-            <!-- Bayes Filter Algorithm -->
-            <h3>Bayes Filter Algorithm</h3>
-            <p>
-                The Bayes Filter provides a recursive framework for updating the belief over time. It consists of two
-                main steps: <strong>prediction</strong> and <strong>correction</strong>.
-            </p>
-            <ol>
-                <li>
-                    <strong>Prediction (Prior Update):</strong>
                     <p>
-                        The robot uses the state evolution model to predict its new state based on the previous belief
-                        and the control input:
+                        This project aims to provide a comprehensive exploration of AMCL through an interactive
+                        simulation and a
+                        detailed theoretical explanation. By integrating concepts from probability, statistics, and
+                        robotics,
+                        the project serves as both an educational resource and a demonstration of how these disciplines
+                        intersect in practical applications.
+                    </p>
+                    <p>
+                        From a pedagogical perspective, the project bridges the gap between abstract mathematical
+                        theories and
+                        their real-world implementations. Concepts such as Bayes' Theorem, random sampling, Gaussian
+                        distributions, and probabilistic inference are fundamental to understanding AMCL. The project
+                        illustrates how these ideas can be applied to solve a tangible problem: enabling a robot to
+                        "understand"
+                        its location in an uncertain environment.
+                    </p>
+                    <p>
+                        The project aligns with the objectives of the Probability and Statistics course by applying
+                        theoretical
+                        knowledge to a scientific and technological context. In addition to presenting the algorithm,
+                        the
+                        project delves into the statistical principles that underpin its functionality, offering
+                        insights into
+                        how uncertainty is modeled, quantified, and managed. By doing so, it highlights the relevance of
+                        probability and statistics in addressing real-world challenges beyond the classroom.
+                    </p>
+                    <p>
+                        The accompanying simulation further enhances the learning experience by providing an interactive
+                        visualization of AMCL in action. Users can observe how particles evolve over time, how sensor
+                        data
+                        refines the robot's belief, and how adaptive adjustments optimize the algorithm's performance.
+                        By
+                        manipulating parameters such as the number of particles and observing their impact, users gain
+                        an
+                        intuitive understanding of the trade-offs involved in localization algorithms.
+                    </p>
+                    <p>
+                        Ultimately, this project aims to achieve the following objectives:
+                    </p>
+                    <ul>
+                        <li>
+                            <strong>Educational Insight:</strong> To provide a deep understanding of AMCL and its
+                            underlying
+                            probabilistic principles, making complex concepts accessible to students and educators.
+                        </li>
+                        <li>
+                            <strong>Practical Demonstration:</strong> To showcase the implementation of AMCL in a
+                            simulated
+                            environment, highlighting its strengths, limitations, and applications.
+                        </li>
+                        <li>
+                            <strong>Statistical Application:</strong> To demonstrate the power of statistical methods,
+                            such as
+                            Bayesian inference and Monte Carlo sampling, in solving real-world problems.
+                        </li>
+                        <li>
+                            <strong>Interactive Learning:</strong> To offer an engaging platform for exploring AMCL
+                            through
+                            user-driven experimentation and visualization.
+                        </li>
+                    </ul>
+                    <p>
+                        In summary, this project is a culmination of theoretical knowledge, practical implementation,
+                        and
+                        interactive learning. By delving into the nuances of AMCL and its application in robotics, it
+                        underscores the importance of probability and statistics as indispensable tools in modern
+                        science and
+                        technology.
+                    </p>
+                </section>
+
+
+                <!-- Theoretical Background Section -->
+                <section id="theoretical-background" class="mb-5">
+                    <h2>Theoretical Background</h2>
+                    <p>
+                        To understand Adaptive Monte Carlo Localization (AMCL), it is essential to explore the
+                        foundational
+                        principles in probability, statistics, and robotics that underpin the algorithm. This section
+                        provides a
+                        comprehensive overview of these concepts and their relevance to the localization process.
+                    </p>
+
+                    <!-- Probability and Random Variables -->
+                    <h4>Probability and Random Variables</h4>
+                    <p>
+                        In the context of robotics, uncertainty is inherent due to noise in motion and sensor
+                        measurements. To
+                        manage this uncertainty, we use the mathematical framework of probability. A <strong>random
+                            variable</strong> is a variable that represents possible outcomes of a random phenomenon.
+                        For
+                        example, the true distance measured by a sensor is a random variable influenced by noise.
+                    </p>
+                    <p>
+                        Probability distributions describe the likelihood of different outcomes. The <strong>Gaussian
+                            distribution</strong>, also known as the normal distribution, is particularly important
+                        because it
+                        models many types of noise observed in robotics. The Gaussian distribution is defined as:
                     </p>
                     <div class="text-center">
-                        \( \overline{bel}(x_t) = \int p(x_t | x_{t-1}, u_t) \, bel(x_{t-1}) \, dx_{t-1} \)
+                        \( P(x) = \frac{1}{\sqrt{2\pi\sigma^2}} \exp\left(-\frac{(x - \mu)^2}{2\sigma^2}\right) \)
                     </div>
                     <p>
-                        This step accounts for the uncertainty in the robot's motion, spreading the belief over possible
-                        new states.
+                        Here, \( \mu \) is the mean (expected value) and \( \sigma^2 \) is the variance, which describes
+                        the
+                        spread of the distribution. In AMCL, Gaussian distributions are used to model motion and sensor
+                        noise.
                     </p>
-                </li>
-                <li>
-                    <strong>Correction (Measurement Update):</strong>
+
+                    <!-- Bayes' Theorem -->
+                    <h4>Bayes' Theorem</h4>
                     <p>
-                        The robot refines its belief using the new observation and the observation model:
+                        Bayes' Theorem provides a formal method for updating probabilities based on new evidence. It is
+                        central
+                        to AMCL as it allows the robot to refine its belief about its pose using sensor data. Bayes'
+                        Theorem is
+                        expressed as:
                     </p>
                     <div class="text-center">
-                        \( bel(x_t) = \eta \, p(z_t | x_t) \, \overline{bel}(x_t) \)
+                        \( P(H | E) = \frac{P(E | H) \cdot P(H)}{P(E)} \)
                     </div>
                     <p>
-                        Here, \( \eta \) is a normalization constant ensuring that the total probability sums to one.
-                        This step adjusts the belief by weighing the predicted states according to how well they agree
-                        with the actual observation.
+                        Where:
                     </p>
-                </li>
-            </ol>
-            <p>
-                By repeatedly applying these steps at each time interval, the robot continuously updates its belief
-                about its position.
-            </p>
-            <p>
-                The integration in the prediction step and the continuous nature of the state space make exact
-                computation infeasible for most real-world applications. This is where the Monte Carlo approach comes
-                into play, approximating the belief using a finite set of samples or particles.
-            </p>
-        </section>
-
-        <!-- Particle Filter Section -->
-        <section class="mb-5">
-            <h2>Particle Filter (Monte Carlo Localization Algorithm)</h2>
-            <p>
-                The Particle Filter is a sequential Monte Carlo method used to implement the Bayes Filter for systems
-                with non-linear dynamics and non-Gaussian probability distributions. In MCL, the Particle Filter
-                approximates the belief \( bel(x_t) \) using a set of weighted particles.
-            </p>
-
-            <!-- Particle Representation -->
-            <h3>Particle Representation</h3>
-            <p>
-                A <strong>particle</strong> represents a possible state of the robot and is associated with a weight
-                that reflects the likelihood of that state given the observations. The set of particles is denoted as:
-            </p>
-            <div class="text-center">
-                \( \{ x_t^{[i]}, w_t^{[i]} \}_{i=1}^M \)
-            </div>
-            <p>
-                Where:
-            </p>
-            <ul>
-                <li>
-                    \( x_t^{[i]} \) is the state (pose) of particle \( i \) at time \( t \).
-                </li>
-                <li>
-                    \( w_t^{[i]} \) is the weight of particle \( i \), representing the importance or likelihood of that
-                    particle.
-                </li>
-                <li>
-                    \( M \) is the total number of particles.
-                </li>
-            </ul>
-
-            <!-- Particle Filter Algorithm -->
-            <h3>Particle Filter Algorithm</h3>
-            <p>
-                The Particle Filter operates recursively through the following steps:
-            </p>
-            <ol>
-                <li>
-                    <strong>Initialization:</strong>
+                    <ul>
+                        <li>\( P(H | E) \): The posterior probability of hypothesis \( H \) given evidence \( E \).</li>
+                        <li>\( P(E | H) \): The likelihood of evidence \( E \) given hypothesis \( H \).</li>
+                        <li>\( P(H) \): The prior probability of hypothesis \( H \).</li>
+                        <li>\( P(E) \): The probability of evidence \( E \) (normalization factor).</li>
+                    </ul>
                     <p>
-                        Sample initial particles \( x_0^{[i]} \) from the initial belief \( bel(x_0) \). If no prior
-                        information is available, particles can be uniformly distributed over the state space.
+                        In localization, the hypothesis \( H \) corresponds to the robot's pose, and \( E \) corresponds
+                        to
+                        sensor measurements. Bayes' Theorem allows the robot to incorporate new sensor data into its
+                        belief,
+                        improving localization accuracy.
                     </p>
-                </li>
-                <li>
-                    <strong>Prediction (Sampling):</strong>
+
+                    <!-- Monte Carlo Methods -->
+                    <h4>Monte Carlo Methods</h4>
                     <p>
-                        For each particle \( x_{t-1}^{[i]} \), generate a new particle \( x_t^{[i]} \) by sampling from
-                        the state evolution model:
+                        Monte Carlo methods are a class of algorithms that rely on repeated random sampling to compute
+                        numerical
+                        results. These methods are particularly useful for problems involving uncertainty or
+                        high-dimensional
+                        spaces, as they provide approximate solutions by sampling from probability distributions.
+                    </p>
+                    <p>
+                        In AMCL, the Monte Carlo method is implemented through a particle filter, which uses a finite
+                        set of
+                        samples (particles) to represent the probability distribution of the robot's pose. Each particle
+                        corresponds to a possible pose, and its weight reflects the likelihood of that pose given the
+                        current
+                        observations.
+                    </p>
+
+                    <!-- States, Controls, and Observations -->
+                    <h4>States, Controls, and Observations</h4>
+                    <p>
+                        The AMCL algorithm operates on three key components:
+                    </p>
+                    <ul>
+                        <li>
+                            <strong>State (\(x_t\)):</strong> The robot's pose at time \( t \), represented by its
+                            position
+                            (\(x, y\)) and orientation (\(\theta\)).
+                        </li>
+                        <li>
+                            <strong>Control (\(u_t\)):</strong> The movement commands, such as velocity (\(v\)) and
+                            angular
+                            velocity (\(\omega\)), that cause the robot to transition between states.
+                        </li>
+                        <li>
+                            <strong>Observation (\(z_t\)):</strong> Sensor measurements, such as LIDAR or ultrasonic
+                            readings,
+                            that provide information about the environment and help refine the robot's belief.
+                        </li>
+                    </ul>
+
+                    <!-- Motion Model -->
+                    <h4>Motion Model</h4>
+                    <p>
+                        The motion model describes how the robot's state evolves over time in response to control
+                        inputs. Due to
+                        uncertainties such as wheel slippage or uneven terrain, this evolution is modeled
+                        probabilistically:
                     </p>
                     <div class="text-center">
-                        \( x_t^{[i]} \sim p(x_t | x_{t-1}^{[i]}, u_t) \)
+                        \( P(x_t | x_{t-1}, u_t) \)
                     </div>
                     <p>
-                        This step simulates the effect of the control input on each particle, accounting for motion
+                        This represents the probability of the robot being in state \( x_t \) given its previous state
+                        \(
+                        x_{t-1} \) and control \( u_t \). The motion model incorporates Gaussian noise to account for
+                        deviations
+                        from the expected motion.
+
+                        <!-- Sensor Model -->
+                    <h4>Sensor Model</h4>
+                    <p>
+                        The sensor model describes the likelihood of observing \( z_t \) given a particular state \( x_t
+                        \):
+                    </p>
+                    <div class="text-center">
+                        \( P(z_t | x_t) \)
+                    </div>
+                    <p>
+                        This accounts for uncertainties in sensor measurements, such as noise or limited accuracy. By
+                        comparing
+                        actual sensor readings to predicted measurements, the sensor model updates the robot's belief.
+
+                        <!-- Belief Representation -->
+                    <h4>Belief Representation</h4>
+                    <p>
+                        The robot's belief about its state is represented as a probability distribution over all
+                        possible
+                        states. The belief at time \( t \) is defined as:
+                    </p>
+                    <div class="text-center">
+                        \( bel(x_t) = P(x_t | z_{1:t}, u_{1:t}) \)
+                    </div>
+                    <p>
+                        Here, \( z_{1:t} \) represents all observations up to time \( t \), and \( u_{1:t} \) represents
+                        all
+                        control inputs up to time \( t \). This distribution is updated iteratively using the Bayes
+                        filter
+                        algorithm.
+                    </p>
+
+                    <!-- Bayes Filter Algorithm -->
+                    <h4>Bayes Filter Algorithm</h4>
+                    <p>
+                        The Bayes filter provides a recursive framework for updating the robot's belief. It consists of
+                        two
+                        steps:
+                    </p>
+                    <ol>
+                        <li>
+                            <strong>Prediction:</strong> The belief is updated based on the motion model and control
+                            input:
+                            <div class="text-center">
+                                \( \overline{bel}(x_t) = \int P(x_t | x_{t-1}, u_t) \cdot bel(x_{t-1}) \, dx_{t-1} \)
+                            </div>
+                        </li>
+                        <li>
+                            <strong>Correction:</strong> The belief is refined using the sensor model and new
+                            observations:
+                            <div class="text-center">
+                                \( bel(x_t) = \eta \cdot P(z_t | x_t) \cdot \overline{bel}(x_t) \)
+                            </div>
+                            <p>Here, \( \eta \) is a normalization constant that ensures the total probability sums to
+                                one.</p>
+                        </li>
+                    </ol>
+                    <p>
+                        By alternating between prediction and correction, the Bayes filter continuously updates the
+                        robot's
+                        belief about its pose.
+                    </p>
+                </section>
+
+
+
+                <!-- Monte Carlo Localization Section -->
+                <section id="monte-carlo-localization" class="mb-5">
+                    <h2>Monte Carlo Localization</h2>
+                    <p>
+                        Monte Carlo Localization (MCL) is a probabilistic algorithm used for estimating a robot's
+                        position and
+                        orientation (pose) within a known map. It leverages a set of weighted hypotheses, called
+                        <em>particles</em>, to approximate the probability distribution of the robot's possible poses.
+                        Each
+                        particle represents a potential state of the robot, and its associated weight reflects the
+                        likelihood of
+                        that state given the current observations.
+                    </p>
+                    <p>
+                        MCL is grounded in principles of probability and statistics, particularly Bayesian inference. By
+                        combining the robot's motion model, sensor model, and the observed data, MCL refines the belief
+                        about
+                        the robot's pose over time, even in the presence of significant noise and uncertainty. This
+                        makes it an
+                        effective solution for robot localization in dynamic and uncertain environments.
+                    </p>
+
+                    <!-- States, Controls, and Observations -->
+                    <h4>States, Controls, and Observations</h4>
+                    <p>
+                        To understand MCL, it is crucial to define its three fundamental components:
+                    </p>
+                    <ul>
+                        <li>
+                            <strong>State (\(x_t\)):</strong> The state encompasses all the information needed to fully
+                            describe
+                            the robot's pose at time \(t\). This is typically represented as:
+                            \[
+                            x_t = (x, y, \theta)
+                            \]
+                            where \(x\) and \(y\) are the robot's position in a 2D plane, and \(\theta\) is its
+                            orientation.
+                        </li>
+                        <li>
+                            <strong>Control (\(u_t\)):</strong> The control data drives changes in the robot's state and
+                            includes linear velocity (\(v\)) and angular velocity (\(\omega\)):
+                            \[
+                            u_t = (v, \omega)
+                            \]
+                            The control input enables the robot to transition between states based on its motion model.
+                        </li>
+                        <li>
+                            <strong>Observation (\(z_t\)):</strong> Observations are sensor measurements obtained at
+                            time \(t\).
+                            For MCL, these are typically distance readings from sensors like LIDAR:
+                            \[
+                            z_t = \text{sensor measurements}
+                            \]
+                            Observations provide information about the robot's environment and are used to update the
+                            belief
+                            about its pose.
+                        </li>
+                    </ul>
+                    <p>
+                        The robot operates in discrete time steps \(t_0, t_1, \ldots, t_n\). At each time step, the
+                        robot's
+                        state is updated based on the control inputs and sensor observations.
+                    </p>
+
+                    <!-- General Model for Dynamics and Observations -->
+                    <h4>General Model for Dynamics and Observations</h4>
+                    <p>
+                        MCL relies on two probabilistic models to predict the robot's future state and refine its
+                        belief:
+                    </p>
+                    <ul>
+                        <li>
+                            <strong>State Evolution Model:</strong> This model predicts the robot's next state based on
+                            its
+                            current state and control input:
+                            \[
+                            p(x_t | x_{t-1}, u_t)
+                            \]
+                            This distribution accounts for uncertainties in the robot's motion, such as wheel slippage
+                            or uneven
+                            terrain. It assumes the Markov property, meaning that the next state depends only on the
+                            current
+                            state and control, not on earlier states.
+                        </li>
+                        <li>
+                            <strong>Observation Model:</strong> This model describes the probability of observing
+                            \(z_t\) given
+                            the robot's state \(x_t\):
+                            \[
+                            p(z_t | x_t)
+                            \]
+                            It quantifies how likely a particular observation is, considering sensor noise and
+                            inaccuracies. The
+                            observation model helps refine the belief based on the comparison between expected and
+                            actual sensor
+                            readings.
+                        </li>
+                    </ul>
+                    <p>
+                        These models enable MCL to predict possible future states and use observations to iteratively
+                        improve
+                        localization accuracy.
+                    </p>
+
+                    <!-- Belief Representation -->
+                    <h4>Belief Representation</h4>
+                    <p>
+                        The belief, denoted as \(bel(x_t)\), represents the probability distribution over all possible
+                        states at
+                        time \(t\), given all past controls (\(u_{1:t}\)) and observations (\(z_{1:t}\)):
+                    </p>
+                    <div class="text-center">
+                        \( bel(x_t) = p(x_t | z_{1:t}, u_{1:t}) \)
+                    </div>
+                    <p>
+                        This belief is the robot's best estimate of its pose, combining prior knowledge, motion
+                        predictions, and
+                        sensor updates. The belief is updated recursively at each time step using the Bayes filter.
+                    </p>
+
+                    <!-- Bayes Filter Algorithm -->
+                    <h4>Bayes Filter Algorithm</h4>
+                    <p>
+                        The Bayes filter provides a mathematical framework for updating the belief over time. It
+                        comprises two
+                        key steps:
+                    </p>
+                    <ol>
+                        <li>
+                            <strong>Prediction (Prior Update):</strong>
+                            <p>
+                                The belief is updated using the state evolution model and the control input. This step
+                                accounts
+                                for the uncertainty in the robot's motion:
+                            </p>
+                            <div class="text-center">
+                                \( \overline{bel}(x_t) = \int p(x_t | x_{t-1}, u_t) \cdot bel(x_{t-1}) \, dx_{t-1} \)
+                            </div>
+                            <p>
+                                The result, \( \overline{bel}(x_t) \), represents the predicted belief before
+                                considering the
+                                new observation.
+                            </p>
+                        </li>
+                        <li>
+                            <strong>Correction (Measurement Update):</strong>
+                            <p>
+                                The predicted belief is refined using the observation model and the new sensor data:
+                            </p>
+                            <div class="text-center">
+                                \( bel(x_t) = \eta \cdot p(z_t | x_t) \cdot \overline{bel}(x_t) \)
+                            </div>
+                            <p>
+                                Here, \( \eta \) is a normalization constant that ensures the belief distribution sums
+                                to one.
+                                This step adjusts the belief to better match the observed data.
+                            </p>
+                        </li>
+                    </ol>
+                    <p>
+                        By iteratively applying these steps, the Bayes filter enables the robot to continuously update
+                        its
+                        belief about its pose as it moves and gathers new data.
+                    </p>
+
+                    <!-- Role of Monte Carlo Methods -->
+                    <h4>Role of Monte Carlo Methods in MCL</h4>
+                    <p>
+                        In real-world applications, the state space is continuous and often high-dimensional, making
+                        exact
+                        computation of the Bayes filter infeasible. Monte Carlo methods address this by approximating
+                        the belief
+                        using a finite set of particles. Each particle represents a potential state, and its weight
+                        reflects the
+                        likelihood of that state given the observations.
+                    </p>
+                    <p>
+                        The Monte Carlo approach allows MCL to efficiently approximate complex, multi-modal probability
+                        distributions and adapt to dynamic, uncertain environments. Over time, particles with higher
+                        weights
+                        cluster around the true pose, while less likely particles are discarded during resampling. This
+                        iterative refinement ensures accurate and robust localization.
+                    </p>
+                </section>
+
+
+                <!-- Particle Filter Section -->
+                <section id="particle-filter" class="mb-5">
+                    <h2>Particle Filter (Monte Carlo Localization Algorithm)</h2>
+                    <p>
+                        The Particle Filter is a powerful implementation of the Bayes Filter that approximates the
+                        belief \(
+                        bel(x_t) \) using a set of discrete, weighted samples called particles. It is particularly
+                        well-suited
+                        for systems with non-linear dynamics and non-Gaussian probability distributions, making it a key
+                        algorithm for robot localization. The Particle Filter handles the challenges of continuous state
+                        spaces
+                        and uncertain observations through the efficient use of random sampling and importance
+                        weighting.
+                    </p>
+
+                    <!-- Particle Representation -->
+                    <h4>Particle Representation</h4>
+                    <p>
+                        A <strong>particle</strong> represents a hypothetical state of the robot and is assigned a
+                        weight that
+                        quantifies the likelihood of that state based on current observations. The set of particles is
+                        denoted
+                        as:
+                    </p>
+                    <div class="text-center">
+                        \( \{ x_t^{[i]}, w_t^{[i]} \}_{i=1}^M \)
+                    </div>
+                    <p>
+                        Where:
+                    </p>
+                    <ul>
+                        <li>
+                            \( x_t^{[i]} \): The state (pose) of particle \( i \) at time \( t \), represented as \( (x,
+                            y,
+                            \theta) \).
+                        </li>
+                        <li>
+                            \( w_t^{[i]} \): The weight of particle \( i \), representing the relative likelihood of the
+                            particle's state given the observations.
+                        </li>
+                        <li>
+                            \( M \): The total number of particles.
+                        </li>
+                    </ul>
+                    <p>
+                        Collectively, the particles form a discrete approximation of the belief distribution, with
+                        higher-weight
+                        particles corresponding to more probable states.
+                    </p>
+
+                    <!-- Particle Filter Algorithm -->
+                    <h4>Particle Filter Algorithm</h4>
+                    <p>
+                        The Particle Filter operates recursively, updating the set of particles and their weights over
+                        time. The
+                        algorithm consists of the following steps:
+                    </p>
+                    <ol>
+                        <li>
+                            <strong>Initialization:</strong>
+                            <p>
+                                Initialize the particles by sampling \( M \) states \( x_0^{[i]} \) from the prior
+                                belief \(
+                                bel(x_0) \). If no prior knowledge is available, particles can be distributed uniformly
+                                across
+                                the state space.
+                            </p>
+                        </li>
+                        <li>
+                            <strong>Prediction (Sampling):</strong>
+                            <p>
+                                For each particle \( x_{t-1}^{[i]} \), generate a new state \( x_t^{[i]} \) by sampling
+                                from the
+                                state evolution model:
+                            </p>
+                            <div class="text-center">
+                                \( x_t^{[i]} \sim p(x_t | x_{t-1}^{[i]}, u_t) \)
+                            </div>
+                            <p>
+                                This step simulates the effects of the robot's motion, incorporating uncertainty due to
+                                factors
+                                like wheel slippage or uneven terrain.
+                            </p>
+                        </li>
+                        <li>
+                            <strong>Weighting (Importance Sampling):</strong>
+                            <p>
+                                Calculate the weight \( w_t^{[i]} \) for each particle based on the likelihood of the
+                                observation \( z_t \) given the particle's state:
+                            </p>
+                            <div class="text-center">
+                                \( w_t^{[i]} = p(z_t | x_t^{[i]}) \)
+                            </div>
+                            <p>
+                                Particles that better explain the observation receive higher weights, reflecting their
+                                greater
+                                importance in the belief distribution.
+                            </p>
+                        </li>
+                        <li>
+                            <strong>Normalization:</strong>
+                            <p>
+                                Normalize the weights so that their sum equals one:
+                            </p>
+                            <div class="text-center">
+                                \( w_t^{[i]} = \frac{w_t^{[i]}}{\sum_{j=1}^M w_t^{[j]}} \)
+                            </div>
+                            <p>
+                                This ensures that the weights can be interpreted as probabilities.
+                            </p>
+                        </li>
+                        <li>
+                            <strong>Resampling:</strong>
+                            <p>
+                                Replace the current set of particles with a new set, sampled with replacement based on
+                                their
+                                weights. Particles with higher weights are more likely to be selected multiple times,
+                                while
+                                particles with low weights may be discarded.
+                            </p>
+                        </li>
+                    </ol>
+                    <p>
+                        By iterating through these steps, the Particle Filter refines its approximation of the belief
+                        distribution over time, focusing computational resources on the most likely regions of the state
+                        space.
+                    </p>
+                    <p>
+                        However, the resampling step can lead to a phenomenon known as <em>sample impoverishment</em>,
+                        where
+                        diversity among particles is reduced. Techniques like adding random noise or adjusting
+                        resampling
+                        strategies can mitigate this issue.
+                    </p>
+
+                    <!-- Importance of the Particle Filter -->
+                    <h4>Importance of the Particle Filter</h4>
+                    <p>
+                        The Particle Filter provides a flexible and efficient solution for implementing the Bayes Filter
+                        in
+                        real-world scenarios where exact computation is infeasible. Its advantages include:
+                    </p>
+                    <ul>
+                        <li>
+                            <strong>Handling Non-linear Dynamics:</strong> The Particle Filter can accommodate complex,
+                            non-linear relationships between states, controls, and observations.
+                        </li>
+                        <li>
+                            <strong>Supporting Multi-modal Distributions:</strong> Unlike Gaussian-based methods, the
+                            Particle
+                            Filter can represent belief distributions with multiple peaks, which is crucial in ambiguous
+                            environments.
+                        </li>
+                        <li>
+                            <strong>Real-time Operation:</strong> By focusing computational resources on the most
+                            probable
+                            regions of the state space, the Particle Filter achieves efficient performance suitable for
+                            real-time applications.
+                        </li>
+                    </ul>
+                    <p>
+                        In robot localization, the Particle Filter enables accurate and robust pose estimation even in
+                        noisy,
+                        dynamic, and uncertain environments.
+                    </p>
+
+                    <!-- Incorporating Teacher's Notes -->
+                    <h4>Incorporating Teacher's Notes</h4>
+                    <p>
+                        According to our teacher's notes, the Particle Filter in MCL is based on the following key
+                        principles:
+                    </p>
+                    <ul>
+                        <li>
+                            <strong>State Evolution:</strong> The robot's state \( x_t \) is generated stochastically
+                            from the
+                            previous state \( x_{t-1} \) and control \( u_t \) using the transition probability \( p(x_t
+                            |
+                            x_{t-1}, u_t) \).
+                        </li>
+                        <li>
+                            <strong>Observation Independence:</strong> Observations \( z_t \) are conditionally
+                            independent of
+                            past measurements given the current state, represented as \( p(z_t | x_t) \).
+                        </li>
+                        <li>
+                            <strong>Belief Update:</strong> The belief \( bel(x_t) \) combines all information from
+                            controls and
+                            observations to provide a probabilistic estimate of the robot's state.
+                        </li>
+                    </ul>
+                    <p>
+                        These principles underpin the Particle Filter and guide its implementation in MCL.
+                    </p>
+
+                    <!-- Visualization of the Particle Filter Steps -->
+                    <h4>Visualization of the Particle Filter Steps</h4>
+                    <p>
+                        The Particle Filter's operation can be understood through the following iterative process:
+                    </p>
+                    <ol>
+                        <li>
+                            <strong>Initialization:</strong> Particles are distributed across the state space,
+                            representing the
+                            robot's initial uncertainty.
+                        </li>
+                        <li>
+                            <strong>Prediction:</strong> Particles are propagated according to the motion model,
+                            incorporating
+                            noise to account for uncertainties in movement.
+                        </li>
+                        <li>
+                            <strong>Weighting:</strong> Each particle's weight is updated based on how well its
+                            predicted state
+                            aligns with the observed data.
+                        </li>
+                        <li>
+                            <strong>Resampling:</strong> Particles are resampled based on their weights, focusing on
+                            regions
+                            with higher likelihood.
+                        </li>
+                    </ol>
+                    <p>
+                        Over successive iterations, the particles converge around the true pose of the robot, enabling
+                        accurate
+                        localization even in challenging environments.
+                    </p>
+                </section>
+
+
+                <!-- Adaptive Monte Carlo Localization Section -->
+                <section id="adaptive-monte-carlo-localization" class="mb-5">
+                    <h2>Adaptive Monte Carlo Localization (AMCL)</h2>
+                    <p>
+                        Adaptive Monte Carlo Localization (AMCL) is a significant advancement of the standard Particle
+                        Filter
+                        that addresses its computational inefficiency in dynamic environments. By dynamically adjusting
+                        the
+                        number of particles based on the robot's uncertainty, AMCL ensures optimal resource utilization
+                        while
+                        maintaining high localization accuracy. This adaptivity is particularly crucial in scenarios
+                        where
+                        environmental ambiguity or sudden changes require a flexible and responsive algorithm.
+                    </p>
+
+                    <!-- Need for Adaptivity -->
+                    <h4>Need for Adaptivity</h4>
+                    <p>
+                        Traditional Particle Filters use a fixed number of particles throughout the localization
+                        process. While
+                        this approach is straightforward, it often results in inefficiencies:
+                    </p>
+                    <ul>
+                        <li>
+                            <strong>High Computational Cost:</strong> In environments with low uncertainty, maintaining
+                            a large
+                            number of particles is unnecessary and wastes computational resources.
+                        </li>
+                        <li>
+                            <strong>Inadequate Exploration:</strong> When uncertainty is high, a fixed particle count
+                            may not be
+                            sufficient to cover all possible states, leading to inaccurate localization.
+                        </li>
+                    </ul>
+                    <p>
+                        AMCL resolves these issues by adapting the number of particles to match the current level of
+                        uncertainty. For example:
+                    </p>
+                    <ul>
+                        <li>
+                            <strong>High Uncertainty:</strong> When the robot is uncertain about its position (e.g.,
+                            after being
+                            "kidnapped" or placed in a new, ambiguous environment), AMCL increases the number of
+                            particles to
+                            explore more possible states.
+                        </li>
+                        <li>
+                            <strong>Low Uncertainty:</strong> When the robot is confident about its position, AMCL
+                            reduces the
+                            particle count to save computational resources.
+                        </li>
+                    </ul>
+                    <p>
+                        This adaptivity ensures that AMCL remains efficient while retaining the robustness needed for
+                        real-world
+                        applications.
+                    </p>
+
+                    <!-- AMCL Algorithm Enhancements -->
+                    <h4>AMCL Algorithm Enhancements</h4>
+                    <p>
+                        AMCL introduces key enhancements to the Particle Filter, leveraging statistical measures to
+                        guide its
+                        adaptivity:
+                    </p>
+                    <ul>
+                        <li>
+                            <strong>Dynamic Particle Count Adjustment:</strong> The algorithm continuously adjusts the
+                            number of
+                            particles based on uncertainty, increasing particles during high uncertainty and reducing
+                            them
+                            during low uncertainty.
+                        </li>
+                        <li>
+                            <strong>Effective Sample Size (ESS):</strong> AMCL uses ESS to quantify particle diversity:
+                            \[
+                            ESS = \frac{1}{\sum_{i=1}^M \left( w_t^{[i]} \right)^2 }
+                            \]
+                            A low ESS indicates that a small subset of particles dominates the distribution, prompting
+                            resampling or adjustments to the particle count.
+                        </li>
+                        <li>
+                            <strong>KLD-Sampling:</strong> Kullback-Leibler Divergence (KLD) sampling determines the
+                            minimum
+                            number of particles required to approximate the belief distribution within a specified
+                            accuracy and
+                            confidence level. This statistical approach balances performance and computational
+                            efficiency.
+                        </li>
+                    </ul>
+
+                    <!-- AMCL Algorithm Steps -->
+                    <h4>AMCL Algorithm Steps</h4>
+                    <p>
+                        AMCL builds upon the standard Particle Filter with modifications to incorporate adaptivity:
+                    </p>
+                    <ol>
+                        <li>
+                            <strong>Initialization:</strong>
+                            <p>
+                                Initialize particles based on prior knowledge of the robot's position. The initial
+                                particle
+                                count can be set to a reasonable default, with adjustments made dynamically as the
+                                algorithm
+                                progresses.
+                            </p>
+                        </li>
+                        <li>
+                            <strong>Prediction:</strong>
+                            <p>
+                                Propagate particles using the motion model, incorporating randomness to account for
+                                motion noise
+                                and uncertainties.
+                            </p>
+                        </li>
+                        <li>
+                            <strong>Weighting:</strong>
+                            <p>
+                                Update particle weights based on the likelihood of observations given the particle
+                                states.
+                            </p>
+                        </li>
+                        <li>
+                            <strong>Effective Sample Size Calculation:</strong>
+                            <p>
+                                Compute ESS to evaluate particle diversity. A low ESS indicates particle degeneracy and
+                                triggers
+                                resampling or particle count adjustments.
+                            </p>
+                        </li>
+                        <li>
+                            <strong>Adaptive Resampling:</strong>
+                            <p>
+                                Perform resampling if ESS falls below a predefined threshold. Adjust the particle count
+                                dynamically using statistical measures like KLD-sampling to ensure sufficient
+                                representation of
+                                the belief distribution.
+                            </p>
+                        </li>
+                        <li>
+                            <strong>Normalization:</strong>
+                            <p>
+                                Normalize particle weights to maintain a valid probability distribution.
+                            </p>
+                        </li>
+                    </ol>
+
+                    <!-- Advantages of AMCL -->
+                    <h4>Advantages of AMCL</h4>
+                    <p>
+                        AMCL offers several advantages over the standard Particle Filter:
+                    </p>
+                    <ul>
+                        <li>
+                            <strong>Computational Efficiency:</strong> By dynamically adjusting the particle count, AMCL
+                            reduces
+                            unnecessary computations in low-uncertainty scenarios, optimizing resource usage.
+                        </li>
+                        <li>
+                            <strong>Improved Accuracy:</strong> The ability to increase particles in high-uncertainty
+                            situations
+                            ensures that the algorithm maintains accuracy even in challenging environments.
+                        </li>
+                        <li>
+                            <strong>Robustness to Environmental Changes:</strong> AMCL adapts to sudden changes in the
+                            robot's
+                            environment or position, providing greater resilience compared to static particle filters.
+                        </li>
+                    </ul>
+
+                    <!-- Mathematical Foundation -->
+                    <h4>Mathematical Foundation</h4>
+                    <p>
+                        The adaptivity of AMCL is grounded in robust statistical measures:
+                    </p>
+                    <ul>
+                        <li>
+                            <strong>Effective Sample Size (ESS):</strong> ESS quantifies the variance of particle
+                            weights,
+                            serving as a measure of particle diversity. A lower ESS indicates greater particle
+                            degeneracy and
+                            signals the need for resampling or particle count adjustments.
+                        </li>
+                        <li>
+                            <strong>Kullback-Leibler Divergence (KLD):</strong> KLD measures the difference between the
+                            true
+                            belief distribution and its particle-based approximation. By setting accuracy and confidence
+                            thresholds, AMCL determines the minimum number of particles required to maintain an accurate
+                            representation of the belief.
+                        </li>
+                    </ul>
+                    <p>
+                        These statistical principles enable AMCL to maintain a balance between computational efficiency
+                        and
+                        localization accuracy, adapting to real-world challenges with minimal human intervention.
+                    </p>
+                </section>
+
+
+                <!-- The Simulation Section -->
+                <section id="simulation" class="mb-5">
+                    <h2>The Simulation</h2>
+                    <p>
+                        To bring the theoretical concepts and algorithms of AMCL to life, I developed an interactive
+                        simulation
+                        using the Unity game engine. This simulation serves as a dynamic learning tool, allowing users
+                        to
+                        visualize how AMCL operates in real-time, gain insights into the roles of probability and
+                        statistics in
+                        localization, and understand how adaptive adjustments maintain both accuracy and efficiency.
+                    </p>
+
+                    <!-- Simulation Overview -->
+                    <h4>Simulation Overview</h4>
+                    <p>
+                        The simulation presents a virtual environment in which a robot, equipped with simulated sensors,
+                        navigates within a known map. Key elements include:
+                    </p>
+                    <ul>
+                        <li>
+                            <strong>Robot Model:</strong> A virtual mobile robot with simulated sensors (e.g., LIDAR)
+                            that
+                            measure distances to obstacles. These measurements are subject to noise, mirroring
+                            real-world
+                            conditions.
+                        </li>
+                        <li>
+                            <strong>Environment Map:</strong> A predefined, two-dimensional map representing walls,
+                            corridors,
+                            and other landmarks. The robot's objective is to determine its position and orientation
+                            within this
+                            map.
+                        </li>
+                        <li>
+                            <strong>Particle Visualization:</strong> A set of particles, each representing a potential
+                            robot
+                            state, are displayed. Users can observe these particles spread out when uncertainty is high
+                            and
+                            cluster together as the robot's confidence in its position grows.
+                        </li>
+                        <li>
+                            <strong>Adjustable Parameters:</strong> Users can modify parameters such as the initial
+                            number of
+                            particles, sensor noise levels, or update intervals. Adjusting these parameters demonstrates
+                            how
+                            they influence localization performance and computational costs.
+                        </li>
+                    </ul>
+
+                    <!-- Implementation Details -->
+                    <h4>Implementation Details</h4>
+                    <p>
+                        The simulation, built with Unity and C#, replicates the AMCL pipeline in a controlled, visual
+                        environment:
+                    </p>
+                    <ul>
+                        <li>
+                            <strong>Particle Representation:</strong> Each particle is a lightweight entity storing its
+                            state
+                            (position, orientation) and weight. The collective set of particles approximates the belief
+                            distribution \( bel(x_t) \).
+                        </li>
+                        <li>
+                            <strong>Motion Model:</strong> The simulation applies the robot's controls and adds Gaussian
+                            noise
+                            to replicate real-world uncertainties. As the robot moves, particles are propagated
+                            according to
+                            this noisy motion model, ensuring that the state space exploration remains realistic.
+                        </li>
+                        <li>
+                            <strong>Sensor Model:</strong> Simulated sensor readings (e.g., distances measured by LIDAR
+                            rays)
+                            are generated. Each particle's weight is updated based on how well its predicted measurement
+                            aligns
+                            with the actual sensor data, reinforcing plausible states and down-weighting less likely
+                            ones.
+                        </li>
+                        <li>
+                            <strong>Adaptive Resampling:</strong> Based on Effective Sample Size (ESS) and other
+                            statistical
+                            metrics, the simulation performs adaptive resampling. When uncertainty is high, more
+                            particles are
+                            introduced to thoroughly explore the state space; when confidence is high, the particle
+                            count
+                            decreases to conserve computational resources.
+                        </li>
+                    </ul>
+
+                    <!-- Interactive Features -->
+                    <h4>Interactive Features</h4>
+                    <p>
+                        The simulation is not merely a passive display; it is designed for interactive exploration:
+                    </p>
+                    <ul>
+                        <li>
+                            <strong>Particle Count Slider:</strong> Users can modify the initial number of particles to
+                            see how
+                            this affects localization accuracy, convergence speed, and computational load.
+                        </li>
+                        <li>
+                            <strong>Reset Button:</strong> With one click, users can reset the simulation to its initial
+                            conditions, experimenting with different parameters or testing the algorithm's response to
+                            sudden
+                            environmental changes.
+                        </li>
+                        <li>
+                            <strong>Visualization Controls:</strong> Toggle visual elements such as particles, sensor
+                            rays, and
+                            uncertainty indicators. By selectively displaying these elements, users can focus on
+                            specific
+                            aspects of the algorithm, such as the sensor model or the distribution of particle weights.
+                        </li>
+                    </ul>
+
+                    <!-- Observing AMCL in Action -->
+                    <h4>Observing AMCL in Action</h4>
+                    <p>
+                        Through direct interaction with the simulation, users can witness:
+                    </p>
+                    <ul>
+                        <li>
+                            <strong>Particle Convergence:</strong> As the robot moves and collects sensor data,
+                            particles
+                            gradually converge around the robot's true pose. Observing this process helps users
+                            understand how
+                            the algorithm refines its belief over time.
+                        </li>
+                        <li>
+                            <strong>Adaptive Particle Adjustment:</strong> The simulation dynamically modifies the
+                            particle
+                            count in response to uncertainty. Users can see this adaptivity in action, as particle
+                            counts rise
+                            to handle ambiguous conditions and drop when the robot's location is well-established.
+                        </li>
+                        <li>
+                            <strong>Effect of Noise and Uncertainty:</strong> By altering motion or sensor noise levels,
+                            users
+                            can observe how AMCL compensates for increased uncertainty. This clarifies the importance of
+                            probability and statistics in managing real-world imperfections.
+                        </li>
+                        <li>
+                            <strong>Performance Trade-offs:</strong> The simulation reveals how computational demands
+                            vary with
+                            particle count and sensor complexity. Users gain insight into how to balance accuracy and
+                            efficiency
+                            for different applications.
+                        </li>
+                    </ul>
+                    <p>
+                        By experimenting with these parameters and visualizations, users not only deepen their
+                        understanding of
+                        AMCL's theoretical underpinnings but also appreciate its practical significance. This hands-on
+                        experience solidifies the connection between probability, statistics, and real-world robotics
+                        challenges, making the learning experience both engaging and informative.
+                    </p>
+                </section>
+
+
+                <!-- Code Walkthrough Section -->
+                <section id="code-walkthrough" class="mb-5">
+                    <h2>Code Walkthrough</h2>
+                    <p>
+                        This section offers an in-depth look at the simulation's codebase, illustrating how the AMCL
+                        algorithm
+                        is implemented, organized, and optimized. By examining key scripts, functions, and classes, we
+                        can see
+                        how theoretical principles translate into practical, maintainable code.
+                    </p>
+
+                    <!-- Structure of the Code -->
+                    <h4>Structure of the Code</h4>
+                    <p>
+                        The code is modularized into distinct scripts, each handling a specific facet of the simulation.
+                        This
+                        modularity enhances readability, scalability, and ease of debugging:
+                    </p>
+                    <ul>
+                        <li>
+                            <strong>ParticleController.cs:</strong> Orchestrates the entire particle filtering process.
+                            It is
+                            responsible for:
+                            <ul>
+                                <li>Initializing the set of particles that represent possible robot states.</li>
+                                <li>Updating particle positions based on the motion model.</li>
+                                <li>Calculating particle weights using the sensor model.</li>
+                                <li>Performing resampling and adapting particle counts as needed.</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <strong>RobotController.cs:</strong> Manages the robot's virtual motion and sensor data
+                            acquisition.
+                            It:
+                            <ul>
+                                <li>Applies control inputs (velocity, rotation) to simulate robot movement.</li>
+                                <li>Collects simulated sensor readings (e.g., distances from obstacles) and provides
+                                    these to
+                                    the ParticleController.</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <strong>UIController.cs:</strong> Handles user interactions, including sliders, buttons, and
+                            toggles. It:
+                            <ul>
+                                <li>Adjusts parameters such as particle count or noise levels.</li>
+                                <li>Resets the simulation or updates visualization options in real-time.</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <strong>Utilities.cs:</strong> Offers helper functions and mathematical utilities,
+                            simplifying tasks
+                            like:
+                            <ul>
+                                <li>Generating random samples from Gaussian distributions.</li>
+                                <li>Precomputing constants for efficiency.</li>
+                                <li>Performing vectorized calculations to speed up computations.</li>
+                            </ul>
+                        </li>
+                    </ul>
+
+                    <!-- Key Functions and Classes -->
+                    <h4>Key Functions and Classes</h4>
+
+                    <!-- Particle Class -->
+                    <h5>Particle Class</h5>
+                    <p>
+                        The <strong>Particle</strong> class represents the fundamental unit of the Monte Carlo
+                        approximation.
+                        Each particle stores:
+                    </p>
+                    <ul>
+                        <li><strong>Position:</strong> The particle's \( (x, y) \) coordinates within the map.</li>
+                        <li><strong>Orientation (\(\theta\)):</strong> The particle's heading angle, determining its
+                            facing
+                            direction.</li>
+                        <li><strong>Weight:</strong> A measure of how well this particle's state explains the current
+                            sensor
+                            data.</li>
+                    </ul>
+                    <p>
+                        Collectively, these attributes enable each particle to serve as a hypothesis about the robot's
+                        true
+                        pose.
+                    </p>
+
+                    <!-- UpdateParticlePositions Function -->
+                    <h5>UpdateParticlePositions Function</h5>
+                    <p>
+                        This function moves particles according to the motion model, integrating control inputs and
+                        adding
+                        realistic noise:
+                    </p>
+                    <ul>
+                        <li>
+                            <strong>Motion Update:</strong> Applies the control commands (\(u_t\)) to each particle's
+                            pose,
+                            simulating the robot's physical movement.
+                        </li>
+                        <li>
+                            <strong>Noise Injection:</strong> Uses Gaussian random variables to model uncertainties in
+                            motion,
+                            ensuring particles spread according to real-world unpredictability.
+                        </li>
+                        <li>
+                            <strong>Performance Considerations:</strong> Vectorized operations and efficient data
+                            structures
+                            minimize overhead, maintaining smooth frame rates and responsive user interactions.
+                        </li>
+                    </ul>
+
+                    <!-- CalculateWeight Function -->
+                    <h5>CalculateWeight Function</h5>
+                    <p>
+                        This function updates each particle's weight based on how well the particle's predicted sensor
+                        readings
+                        match the actual sensor data from the robot:
+                    </p>
+                    <ul>
+                        <li>
+                            <strong>Sensor Simulation:</strong> For each particle, the code simulates sensor rays (e.g.,
+                            LIDAR
+                            beams) and determines the expected distances to obstacles.
+                        </li>
+                        <li>
+                            <strong>Likelihood Computation:</strong> The observed sensor data is compared against the
+                            simulated
+                            readings, and a Gaussian likelihood function computes the probability of these observations.
+                            Particles with closer agreement receive higher weights.
+                        </li>
+                        <li>
+                            <strong>Normalization:</strong> After computing weights for all particles, weights are
+                            normalized so
+                            they sum to one, maintaining a valid probability distribution.
+                        </li>
+                    </ul>
+                    <p>
+                        By refining particle weights, this step effectively incorporates new sensory evidence, improving
+                        the
+                        belief distribution's accuracy.
+                    </p>
+
+                    <!-- ResampleParticles Function -->
+                    <h5>ResampleParticles Function</h5>
+                    <p>
+                        The resampling process helps maintain a representative set of particles:
+                    </p>
+                    <ul>
+                        <li>
+                            <strong>Effective Sample Size (ESS):</strong> The code calculates ESS to determine when
+                            resampling
+                            is necessary. A low ESS indicates that the belief distribution is dominated by a few
+                            particles,
+                            necessitating resampling to restore diversity.
+                        </li>
+                        <li>
+                            <strong>Resampling Methods:</strong> Techniques like the “resampling wheel” (systematic
+                            resampling)
+                            ensure that particles with higher weights are more likely to be selected, while low-weight
+                            particles
+                            are discarded.
+                        </li>
+                        <li>
+                            <strong>Adaptive Adjustment:</strong> Based on ESS and KLD metrics, the code adjusts the
+                            particle
+                            count, adding or removing particles to balance computational efficiency and accuracy.
+                        </li>
+                    </ul>
+                    <p>
+                        This adaptive resampling ensures the algorithm remains robust, even as environmental conditions
+                        or robot
+                        uncertainty change over time.
+                    </p>
+
+                    <!-- Optimization Techniques -->
+                    <h4>Optimization Techniques</h4>
+                    <p>
+                        Achieving smooth performance, especially in a WebGL build, required careful optimization:
+                    </p>
+                    <ul>
+                        <li>
+                            <strong>Data Structures:</strong> Arrays and lists were chosen for fast indexing and minimal
+                            overhead, improving frame rates.
+                        </li>
+                        <li>
+                            <strong>Minimized Memory Allocations:</strong> Reusing objects and preallocating arrays
+                            reduced
+                            garbage collection interruptions.
+                        </li>
+                        <li>
+                            <strong>Mathematical Efficiency:</strong> Precomputing constants, caching intermediate
+                            results, and
+                            simplifying equations minimized redundant calculations.
+                        </li>
+                        <li>
+                            <strong>Selective Updates:</strong> Restricting certain calculations or visualizations to
+                            essential
+                            frames balanced responsiveness with computational load.
+                        </li>
+                    </ul>
+
+                    <!-- Challenges and Solutions -->
+                    <h4>Challenges and Solutions</h4>
+                    <p>
+                        Several challenges arose during development, prompting innovative solutions:
+                    </p>
+                    <ul>
+                        <li>
+                            <strong>Performance Bottlenecks:</strong> High particle counts decreased frame rates.
+                            <em>Solution:</em> Adaptive particle counts and vectorized computations improved efficiency.
+                        </li>
+                        <li>
+                            <strong>Sample Impoverishment:</strong> Repeated resampling reduced particle diversity.
+                            <em>Solution:</em> Introduced partial resampling and strategies to preserve high-weight
+                            particles,
+                            maintaining a richer representation of the belief distribution.
+                        </li>
+                        <li>
+                            <strong>WebGL Constraints:</strong> Limited threading and other platform restrictions
+                            existed.
+                            <em>Solution:</em> Simplified single-threaded approaches and leveraged Unity's built-in
+                            optimizations for stable WebGL performance.
+                        </li>
+                    </ul>
+                    <p>
+                        These refinements ensured that the code remained robust, efficient, and true to the theoretical
+                        principles of AMCL, ultimately providing a responsive and instructive user experience.
+                    </p>
+                </section>
+
+
+                <!-- Analysis and Discussion Section -->
+                <section id="analysis-discussion" class="mb-5">
+                    <h2>Analysis and Discussion</h2>
+                    <p>
+                        In this section, we evaluate the performance of the Adaptive Monte Carlo Localization (AMCL)
+                        algorithm
+                        as implemented in our simulation. We examine how various parameters and conditions influence
+                        localization accuracy, convergence speed, and computational efficiency. Additionally, we relate
+                        these
+                        empirical findings to the underlying principles of probability and statistics, reinforcing the
+                        theoretical foundations of AMCL.
+                    </p>
+
+                    <!-- Performance Evaluation -->
+                    <h4>Performance Evaluation</h4>
+                    <p>
+                        Assessing AMCL involves measuring how effectively it localizes the robot and manages
+                        computational
+                        resources. Three key metrics guide our analysis:
+                    </p>
+                    <ul>
+                        <li>
+                            <strong>Localization Accuracy:</strong> This metric measures how closely the estimated robot
+                            pose
+                            matches its true position and orientation. Higher accuracy indicates that the algorithm
+                            successfully
+                            refines its belief distribution and converges near the robot's actual state.
+                        </li>
+                        <li>
+                            <strong>Convergence Time:</strong> The rate at which particles cluster around the true pose
+                            reflects
+                            the algorithm's efficiency. Faster convergence suggests that AMCL effectively incorporates
+                            new
+                            sensor data and adjusts the number of particles to reach an accurate belief quickly.
+                        </li>
+                        <li>
+                            <strong>Computational Efficiency:</strong> Since AMCL adapts the particle count, it must
+                            balance the
+                            need for sufficient coverage of the state space with the desire to minimize computational
+                            overhead.
+                            Efficient use of particles ensures that real-time performance is maintained without
+                            sacrificing
+                            accuracy.
+                        </li>
+                    </ul>
+
+                    <!-- Impact of Particle Count -->
+                    <h4>Impact of Particle Count</h4>
+                    <p>
+                        Particle count is a crucial parameter influencing AMCL's performance:
+                    </p>
+                    <ul>
+                        <li>
+                            <strong>Low Particle Count:</strong> Too few particles yield insufficient representation of
+                            the
+                            belief distribution, limiting accuracy. The algorithm may fail to capture all possible
+                            states,
+                            causing slower convergence and risking incorrect localization.
+                        </li>
+                        <li>
+                            <strong>High Particle Count:</strong> Increasing the number of particles improves coverage
+                            and
+                            accuracy but at a higher computational cost. Excessive particle counts can reduce frame
+                            rates or
+                            responsiveness, especially in WebGL environments.
+                        </li>
+                    </ul>
+                    <p>
+                        AMCL addresses this trade-off by dynamically adjusting the particle count in response to
                         uncertainty.
+                        When uncertainty is high, more particles explore the state space; when confidence is high, fewer
+                        particles reduce computational demands.
                     </p>
-                </li>
-                <li>
-                    <strong>Weighting (Importance Sampling):</strong>
-                    <p>
-                        Update the weight of each particle based on the observation likelihood:
-                    </p>
-                    <div class="text-center">
-                        \( w_t^{[i]} = p(z_t | x_t^{[i]}) \)
-                    </div>
-                    <p>
-                        Particles that are more consistent with the actual observation receive higher weights.
-                    </p>
-                </li>
-                <li>
-                    <strong>Normalization:</strong>
-                    <p>
-                        Normalize the weights of all particles so that they sum to one:
-                    </p>
-                    <div class="text-center">
-                        \( w_t^{[i]} = \frac{w_t^{[i]}}{\sum_{j=1}^M w_t^{[j]}} \)
-                    </div>
-                </li>
-                <li>
-                    <strong>Resampling:</strong>
-                    <p>
-                        Generate a new set of particles by sampling from the current set, with replacement, according to
-                        their weights. Particles with higher weights are more likely to be selected multiple times,
-                        while particles with low weights may be discarded.
-                    </p>
-                </li>
-            </ol>
-            <p>
-                The resampling step helps to focus computational resources on the more promising areas of the state
-                space but can lead to a loss of diversity among particles, known as <em>sample impoverishment</em>.
-            </p>
 
-            <!-- Importance of the Particle Filter -->
-            <h3>Importance of the Particle Filter</h3>
-            <p>
-                The Particle Filter allows for an approximate solution to the Bayes Filter in cases where exact
-                solutions are computationally infeasible. By representing the belief with particles, we can handle
-                complex, multi-modal probability distributions and non-linear motion and observation models.
-            </p>
-            <p>
-                In the context of robot localization, the Particle Filter enables the robot to maintain and update a
-                probabilistic belief about its pose in real-time, even in the presence of uncertainty and noise.
-            </p>
-
-            <!-- Incorporating Teacher's Notes -->
-            <h3>Incorporating Teacher's Notes</h3>
-            <p>
-                According to our teacher's notes, the key aspects of the Particle Filter in MCL are:
-            </p>
-            <ul>
-                <li>
-                    <strong>State Evolution:</strong> The state \( x_t \) is generated stochastically from the previous
-                    state \( x_{t-1} \) and controls \( u_t \) using the transition probability \( p(x_t | x_{t-1}, u_t)
-                    \).
-                </li>
-                <li>
-                    <strong>Observation Independence:</strong> Observations \( z_t \) are conditionally independent of
-                    past measurements given the current state, expressed as \( p(z_t | x_t) \).
-                </li>
-                <li>
-                    <strong>Belief Update:</strong> The belief \( bel(x_t) \) is the posterior distribution of the
-                    state, combining all information from controls and observations.
-                </li>
-            </ul>
-            <p>
-                These principles form the foundation of the Particle Filter algorithm and guide its implementation in
-                MCL.
-            </p>
-
-            <!-- Visualization of the Particle Filter Steps -->
-            <h3>Visualization of the Particle Filter Steps</h3>
-            <p>
-                To better understand how the Particle Filter works, let's visualize the steps:
-            </p>
-            <ol>
-                <li>
-                    <strong>Initialization:</strong> Particles are randomly distributed across the map, representing the
-                    robot's initial uncertainty about its position.
-                </li>
-                <li>
-                    <strong>Prediction:</strong> As the robot moves, particles are propagated according to the motion
-                    model, introducing some spread due to motion noise.
-                </li>
-                <li>
-                    <strong>Weighting:</strong> Each particle's weight is updated based on how well its predicted state
-                    explains the new sensor observation.
-                </li>
-                <li>
-                    <strong>Resampling:</strong> Particles are resampled based on their weights, focusing on areas with
-                    higher probability.
-                </li>
-            </ol>
-            <p>
-                Through repeated iterations, the particles converge around the robot's true pose, allowing for accurate
-                localization.
-            </p>
-        </section>
-
-        <!-- Adaptive Monte Carlo Localization Section -->
-        <section class="mb-5">
-            <h2>Adaptive Monte Carlo Localization (AMCL)</h2>
-            <p>
-                While the standard Particle Filter is effective for localization, it can be computationally intensive,
-                especially in complex environments. Adaptive Monte Carlo Localization (AMCL) enhances the Particle
-                Filter by dynamically adjusting the number of particles based on the robot's uncertainty. This allows
-                for efficient use of computational resources while maintaining accurate localization.
-            </p>
-
-            <!-- Need for Adaptivity -->
-            <h3>Need for Adaptivity</h3>
-            <p>
-                In scenarios where the robot has high uncertainty about its position (e.g., after being kidnapped or in
-                ambiguous environments), more particles are needed to explore the possible states. Conversely, when the
-                robot is confident about its position, fewer particles suffice. By adapting the number of particles,
-                AMCL optimizes performance and accuracy.
-            </p>
-
-            <!-- AMCL Algorithm Enhancements -->
-            <h3>AMCL Algorithm Enhancements</h3>
-            <p>
-                AMCL introduces several enhancements to the standard Particle Filter:
-            </p>
-            <ul>
-                <li>
-                    <strong>Dynamic Particle Number Adjustment:</strong> The algorithm adjusts the number of particles
-                    in response to the robot's uncertainty, increasing particles when uncertainty is high and reducing
-                    them when confidence is high.
-                </li>
-                <li>
-                    <strong>Effective Sample Size (ESS):</strong> AMCL calculates the Effective Sample Size to quantify
-                    particle diversity. ESS is given by:
-                    \[
-                    ESS = \frac{1}{\sum_{i=1}^M \left( w_t^{[i]} \right)^2 }
-                    \]
-                    A lower ESS indicates that fewer particles effectively represent the belief, prompting resampling or
-                    increasing particle count.
-                </li>
-                <li>
-                    <strong>KLD-Sampling:</strong> Kullback-Leibler Divergence (KLD) sampling determines the required
-                    number of particles based on the desired accuracy and confidence levels. This statistical approach
-                    helps maintain the balance between performance and computational load.
-                </li>
-            </ul>
-
-            <!-- AMCL Algorithm Steps -->
-            <h3>AMCL Algorithm Steps</h3>
-            <p>
-                The AMCL algorithm follows similar steps to the standard Particle Filter, with modifications to
-                incorporate adaptivity:
-            </p>
-            <ol>
-                <li>
-                    <strong>Initialization:</strong>
+                    <!-- Observations from the Simulation -->
+                    <h4>Observations from the Simulation</h4>
                     <p>
-                        Start with an initial set of particles based on prior knowledge. The initial particle count can
-                        be set to a reasonable default.
+                        Running the simulation under various conditions revealed several key insights:
                     </p>
-                </li>
-                <li>
-                    <strong>Prediction:</strong>
-                    <p>
-                        Propagate each particle according to the motion model, adding randomness to account for motion
-                        noise.
-                    </p>
-                </li>
-                <li>
-                    <strong>Weighting:</strong>
-                    <p>
-                        Update particle weights based on the likelihood of the new observations given the particle's
-                        state.
-                    </p>
-                </li>
-                <li>
-                    <strong>Effective Sample Size Calculation:</strong>
-                    <p>
-                        Calculate ESS to assess the level of particle degeneracy.
-                    </p>
-                </li>
-                <li>
-                    <strong>Adaptive Resampling:</strong>
-                    <p>
-                        If ESS falls below a predefined threshold, perform resampling. Adjust the number of particles
-                        based on uncertainty measures like KLD-sampling.
-                    </p>
-                </li>
-                <li>
-                    <strong>Normalization:</strong>
-                    <p>
-                        Normalize the particle weights to ensure they sum to one.
-                    </p>
-                </li>
-            </ol>
+                    <ul>
+                        <li>
+                            <strong>Convergence Behavior:</strong> Starting with high uncertainty, particles initially
+                            scatter
+                            across the map. As the robot collects sensor data, particles gradually converge around the
+                            true
+                            pose, demonstrating AMCL's capacity to refine its estimate despite initial ambiguity.
+                        </li>
+                        <li>
+                            <strong>Adaptive Particle Adjustment:</strong> The simulation confirms that particle counts
+                            increase
+                            in ambiguous or changing environments, enhancing the algorithm's exploration capacity.
+                            Conversely,
+                            when the robot's pose becomes clearer, particle counts decrease, saving computational
+                            resources.
+                        </li>
+                        <li>
+                            <strong>Effect of Noise:</strong> Elevated motion or sensor noise spreads particles more
+                            broadly,
+                            slowing convergence. This sensitivity underscores the necessity of accurate noise modeling
+                            and the
+                            robustness of AMCL's probabilistic framework in managing uncertainty.
+                        </li>
+                        <li>
+                            <strong>Sample Impoverishment Mitigation:</strong> Techniques like partial resampling
+                            preserved
+                            diversity among particles, preventing the distribution from collapsing around a narrow
+                            subset of
+                            states. This maintained a more accurate belief distribution over time.
+                        </li>
+                    </ul>
 
-            <!-- Advantages of AMCL -->
-            <h3>Advantages of AMCL</h3>
-            <p>
-                AMCL offers several benefits over the standard Particle Filter:
-            </p>
-            <ul>
-                <li>
-                    <strong>Computational Efficiency:</strong> By using more particles only when necessary, AMCL reduces
-                    the average computational load.
-                </li>
-                <li>
-                    <strong>Improved Accuracy:</strong> Dynamic adjustment allows the algorithm to allocate resources
-                    effectively, maintaining accuracy even in challenging conditions.
-                </li>
-                <li>
-                    <strong>Robustness:</strong> AMCL can better handle sudden changes in the robot's environment or
-                    unexpected movements.
-                </li>
-            </ul>
-
-            <!-- Mathematical Foundation -->
-            <h3>Mathematical Foundation</h3>
-            <p>
-                The adaptivity in AMCL is grounded in statistical measures:
-            </p>
-            <ul>
-                <li>
-                    <strong>Effective Sample Size (ESS):</strong> As previously mentioned, ESS quantifies the variance
-                    of particle weights. A low ESS indicates that few particles have significant weight, suggesting that
-                    resampling is needed to avoid sample impoverishment.
-                </li>
-                <li>
-                    <strong>Kullback-Leibler Divergence (KLD):</strong> KLD measures the difference between the true
-                    probability distribution and the particle approximation. AMCL uses KLD to determine the minimum
-                    number of particles required to achieve a desired approximation accuracy with a specified confidence
-                    level.
-                </li>
-            </ul>
-            <p>
-                By integrating these statistical measures, AMCL maintains an optimal balance between performance and
-                accuracy.
-            </p>
-        </section>
-
-        <!-- The Simulation Section -->
-        <section class="mb-5">
-            <h2>The Simulation</h2>
-            <p>
-                To demonstrate the principles of AMCL, we developed an interactive simulation using Unity. The
-                simulation allows users to observe how the algorithm localizes a robot within a known map, adjusting the
-                number of particles dynamically based on uncertainty.
-            </p>
-
-            <!-- Simulation Overview -->
-            <h3>Simulation Overview</h3>
-            <p>
-                The simulation features:
-            </p>
-            <ul>
-                <li>
-                    <strong>Robot Model:</strong> A robot equipped with simulated sensors (e.g., LIDAR) capable of
-                    measuring distances to obstacles.
-                </li>
-                <li>
-                    <strong>Environment Map:</strong> A predefined map representing the environment in which the robot
-                    operates.
-                </li>
-                <li>
-                    <strong>Particle Visualization:</strong> Particles are visually represented, showing their positions
-                    and orientations.
-                </li>
-                <li>
-                    <strong>Adjustable Parameters:</strong> Users can adjust the number of particles and observe the
-                    effects on localization performance.
-                </li>
-            </ul>
-
-            <!-- Implementation Details -->
-            <h3>Implementation Details</h3>
-            <p>
-                The simulation is implemented using the Unity game engine and C#. Key aspects of the implementation
-                include:
-            </p>
-            <ul>
-                <li>
-                    <strong>Particle Representation:</strong> Each particle is represented by a lightweight object
-                    containing its state (position, orientation) and weight.
-                </li>
-                <li>
-                    <strong>Motion Model:</strong> The robot's movement and particle propagation are simulated with
-                    added Gaussian noise to represent motion uncertainty.
-                </li>
-                <li>
-                    <strong>Sensor Model:</strong> Simulated sensor readings are generated, and particle weights are
-                    updated based on the likelihood of these readings given the particles' states.
-                </li>
-                <li>
-                    <strong>Adaptive Resampling:</strong> The algorithm adjusts the particle count and performs
-                    resampling based on the calculated ESS.
-                </li>
-            </ul>
-
-            <!-- Interactive Features -->
-            <h3>Interactive Features</h3>
-            <p>
-                Users can interact with the simulation in several ways:
-            </p>
-            <ul>
-                <li>
-                    <strong>Particle Count Slider:</strong> Adjust the initial number of particles to see how it affects
-                    localization accuracy and computational load.
-                </li>
-                <li>
-                    <strong>Reset Button:</strong> Restart the simulation with new parameters or to observe different
-                    scenarios.
-                </li>
-                <li>
-                    <strong>Visualization Controls:</strong> Toggle the display of particles, sensor rays, and other
-                    visual aids to enhance understanding.
-                </li>
-            </ul>
-
-            <!-- Observing AMCL in Action -->
-            <h3>Observing AMCL in Action</h3>
-            <p>
-                Through the simulation, users can observe:
-            </p>
-            <ul>
-                <li>
-                    <strong>Particle Convergence:</strong> How particles converge around the robot's true position over
-                    time.
-                </li>
-                <li>
-                    <strong>Adaptive Particle Adjustment:</strong> The dynamic increase or decrease in particle count
-                    based on the robot's uncertainty.
-                </li>
-                <li>
-                    <strong>Effect of Noise:</strong> How motion and sensor noise impact localization and how the
-                    algorithm compensates for these uncertainties.
-                </li>
-            </ul>
-            <p>
-                By experimenting with different settings, users can gain a deeper understanding of the AMCL algorithm
-                and its practical applications.
-            </p>
-        </section>
-
-        <!-- Code Walkthrough Section -->
-        <section class="mb-5">
-            <h2>Code Walkthrough</h2>
-            <p>
-                This section provides an overview of the key components of the simulation's codebase, highlighting how
-                the AMCL algorithm is implemented and optimized.
-            </p>
-
-            <!-- Structure of the Code -->
-            <h3>Structure of the Code</h3>
-            <p>
-                The code is organized into several scripts, each responsible for different aspects of the simulation:
-            </p>
-            <ul>
-                <li>
-                    <strong>ParticleController.cs:</strong> Manages the particles, including initialization, updating,
-                    weighting, and resampling.
-                </li>
-                <li>
-                    <strong>RobotController.cs:</strong> Handles the robot's movement and sensor readings.
-                </li>
-                <li>
-                    <strong>UIController.cs:</strong> Manages user interface elements like sliders and buttons.
-                </li>
-                <li>
-                    <strong>Utilities.cs:</strong> Contains helper functions for mathematical calculations and random
-                    number generation.
-                </li>
-            </ul>
-
-            <!-- Key Functions and Classes -->
-            <h3>Key Functions and Classes</h3>
-
-            <!-- Particle Class -->
-            <h4>Particle Class</h4>
-            <p>
-                The <strong>Particle</strong> class represents individual particles. Its attributes include:
-            </p>
-            <ul>
-                <li>
-                    <strong>Position:</strong> The particle's \( (x, y) \) coordinates in the environment.
-                </li>
-                <li>
-                    <strong>Orientation:</strong> The particle's heading angle \( \theta \).
-                </li>
-                <li>
-                    <strong>Weight:</strong> The particle's importance weight based on sensor measurements.
-                </li>
-            </ul>
-
-            <!-- UpdateParticlePositions Function -->
-            <h4>UpdateParticlePositions Function</h4>
-            <p>
-                This function updates the particles' positions and orientations based on the robot's movement and the
-                motion model. Key aspects include:
-            </p>
-            <ul>
-                <li>
-                    <strong>Motion Update:</strong> Applies the control input \( u_t \) to each particle, adding random
-                    noise to simulate motion uncertainty.
-                </li>
-                <li>
-                    <strong>Noise Generation:</strong> Uses Gaussian distributions to generate realistic motion
-                    disturbances.
-                </li>
-                <li>
-                    <strong>Performance Optimization:</strong> Calculations are vectorized where possible to improve
-                    efficiency.
-                </li>
-            </ul>
-
-            <!-- CalculateWeight Function -->
-            <h4>CalculateWeight Function</h4>
-            <p>
-                This function calculates the weight of each particle based on the likelihood of the observed sensor
-                data. Key components are:
-            </p>
-            <ul>
-                <li>
-                    <strong>Sensor Simulation:</strong> Simulates sensor readings for each particle using raycasting.
-                </li>
-                <li>
-                    <strong>Likelihood Calculation:</strong> Compares simulated readings with actual sensor data,
-                    computing the probability using a Gaussian likelihood function.
-                </li>
-                <li>
-                    <strong>Normalization:</strong> Ensures that all weights sum to one after calculations.
-                </li>
-            </ul>
-
-            <!-- ResampleParticles Function -->
-            <h4>ResampleParticles Function</h4>
-            <p>
-                This function resamples the particle set based on their weights. Notable features include:
-            </p>
-            <ul>
-                <li>
-                    <strong>Effective Sample Size (ESS):</strong> Calculates ESS to decide if resampling is necessary.
-                </li>
-                <li>
-                    <strong>Resampling Wheel:</strong> Implements systematic resampling to select particles proportional
-                    to their weights.
-                </li>
-                <li>
-                    <strong>Adaptive Adjustment:</strong> Modifies the number of particles based on uncertainty, adding
-                    or removing particles as needed.
-                </li>
-            </ul>
-
-            <!-- Optimization Techniques -->
-            <h3>Optimization Techniques</h3>
-            <p>
-                To ensure the simulation runs smoothly, especially in a web browser via WebGL, several optimization
-                strategies were employed:
-            </p>
-            <ul>
-                <li>
-                    <strong>Efficient Data Structures:</strong> Used arrays and lists optimized for fast access and
-                    minimal memory overhead.
-                </li>
-                <li>
-                    <strong>Minimized Allocations:</strong> Reused objects and data structures to reduce garbage
-                    collection pauses.
-                </li>
-                <li>
-                    <strong>Mathematical Optimizations:</strong> Simplified equations and precomputed constants to
-                    reduce computational load.
-                </li>
-                <li>
-                    <strong>Conditional Updates:</strong> Limited updates and visualizations to essential frames to
-                    balance performance and responsiveness.
-                </li>
-            </ul>
-
-            <!-- Challenges and Solutions -->
-            <h3>Challenges and Solutions</h3>
-            <p>
-                During development, several challenges were encountered:
-            </p>
-            <ul>
-                <li>
-                    <strong>Performance Bottlenecks:</strong> High particle counts caused frame rate drops.
-                    <em>Solution:</em> Implemented adaptive particle counts and optimized critical functions.
-                </li>
-                <li>
-                    <strong>Sample Impoverishment:</strong> Resampling could lead to loss of particle diversity.
-                    <em>Solution:</em> Preserved high-weight particles and introduced partial resampling strategies.
-                </li>
-                <li>
-                    <strong>WebGL Limitations:</strong> WebGL builds have restrictions on threading and certain
-                    optimizations. <em>Solution:</em> Adjusted code to be compatible with WebGL and focused on
-                    single-threaded optimizations.
-                </li>
-            </ul>
-            <p>
-                These solutions improved the simulation's reliability and user experience.
-            </p>
-        </section>
-
-        <!-- Analysis and Discussion Section -->
-        <section class="mb-5">
-            <h2>Analysis and Discussion</h2>
-            <p>
-                In this section, we analyze the performance of the Adaptive Monte Carlo Localization (AMCL) algorithm as
-                implemented in our simulation. We discuss the effects of various parameters, observe the behavior of the
-                algorithm under different conditions, and relate our findings to the underlying principles of
-                probability and statistics.
-            </p>
-
-            <!-- Performance Evaluation -->
-            <h3>Performance Evaluation</h3>
-            <p>
-                The AMCL algorithm's effectiveness can be assessed based on its ability to accurately localize the robot
-                within the environment while efficiently utilizing computational resources. Key performance metrics
-                include:
-            </p>
-            <ul>
-                <li>
-                    <strong>Localization Accuracy:</strong> The proximity of the estimated robot pose to its true
-                    position.
-                </li>
-                <li>
-                    <strong>Convergence Time:</strong> The time or number of iterations required for the particles to
-                    converge around the true pose.
-                </li>
-                <li>
-                    <strong>Computational Efficiency:</strong> The processing time and resources consumed, influenced by
-                    the number of particles.
-                </li>
-            </ul>
-
-            <!-- Impact of Particle Count -->
-            <h3>Impact of Particle Count</h3>
-            <p>
-                The number of particles plays a crucial role in the algorithm's performance:
-            </p>
-            <ul>
-                <li>
-                    <strong>Low Particle Count:</strong>
+                    <!-- Relation to Probability and Statistics -->
+                    <h4>Relation to Probability and Statistics</h4>
                     <p>
-                        With too few particles, the algorithm may not adequately represent the belief distribution,
-                        leading to poor localization accuracy and slow convergence. The particles might not cover the
-                        entire state space, missing the true pose.
+                        The simulation vividly illustrates how fundamental statistical concepts shape AMCL's behavior:
                     </p>
-                </li>
-                <li>
-                    <strong>High Particle Count:</strong>
+                    <ul>
+                        <li>
+                            <strong>Random Sampling:</strong> Particles sampled from probability distributions enable
+                            the
+                            algorithm to represent uncertainty and model complex, multi-modal belief distributions.
+                        </li>
+                        <li>
+                            <strong>Probability Distributions:</strong> AMCL employs Gaussian models for motion and
+                            sensor
+                            noise, reflecting standard statistical practices for handling real-world variability.
+                        </li>
+                        <li>
+                            <strong>Bayesian Inference:</strong> The iterative prediction and correction steps exemplify
+                            Bayesian reasoning, continuously updating beliefs as new evidence emerges.
+                        </li>
+                        <li>
+                            <strong>Effective Sample Size (ESS):</strong> ESS quantifies particle diversity, guiding
+                            decisions
+                            on when to resample or adjust particle counts. This demonstrates the direct application of
+                            statistical measures to algorithmic decisions.
+                        </li>
+                    </ul>
                     <p>
-                        Increasing the number of particles improves the representation of the belief distribution,
-                        enhancing accuracy and convergence speed. However, it also increases computational load,
-                        potentially affecting real-time performance.
+                        These relationships reaffirm that probability and statistics lie at the heart of robust,
+                        adaptive
+                        localization methods like AMCL.
                     </p>
-                </li>
-            </ul>
-            <p>
-                AMCL addresses this by dynamically adjusting the particle count based on uncertainty, aiming for an
-                optimal balance.
-            </p>
 
-            <!-- Observations from the Simulation -->
-            <h3>Observations from the Simulation</h3>
-            <p>
-                Through the simulation, several important observations were made:
-            </p>
-            <ul>
-                <li>
-                    <strong>Convergence Behavior:</strong>
+                    <!-- Limitations and Challenges -->
+                    <h4>Limitations and Challenges</h4>
                     <p>
-                        When initialized with high uncertainty, particles are spread throughout the environment. Over
-                        time, as sensor data is incorporated, particles begin to converge around the true robot pose,
-                        demonstrating the algorithm's ability to localize effectively.
+                        While the simulation confirms AMCL's effectiveness, it also reveals certain constraints and
+                        areas for
+                        improvement:
                     </p>
-                </li>
-                <li>
-                    <strong>Adaptive Particle Adjustment:</strong>
-                    <p>
-                        The simulation shows that the particle count increases when the robot encounters ambiguous areas
-                        or experiences significant movement, reflecting increased uncertainty. Conversely, the particle
-                        count decreases when the robot's position becomes more certain.
-                    </p>
-                </li>
-                <li>
-                    <strong>Effect of Noise:</strong>
-                    <p>
-                        Introducing higher levels of motion or sensor noise results in wider spread of particles and
-                        slower convergence. This highlights the algorithm's sensitivity to noise and the importance of
-                        accurate noise modeling.
-                    </p>
-                </li>
-                <li>
-                    <strong>Sample Impoverishment Mitigation:</strong>
-                    <p>
-                        Implementing strategies to preserve high-weight particles, such as partial resampling, helped
-                        prevent the loss of valuable particles during resampling. This maintained particle diversity and
-                        improved localization stability.
-                    </p>
-                </li>
-            </ul>
+                    <ul>
+                        <li>
+                            <strong>Computational Constraints:</strong> High particle counts can stress computational
+                            resources,
+                            particularly in a web-based environment. This necessitates careful optimization and adaptive
+                            strategies to maintain real-time performance.
+                        </li>
+                        <li>
+                            <strong>Noise Modeling:</strong> Precise modeling of motion and sensor noise is essential.
+                            Oversimplified assumptions can degrade algorithm performance, underscoring the value of
+                            refined
+                            statistical models.
+                        </li>
+                        <li>
+                            <strong>Environmental Complexity:</strong> The simulated environment may not fully capture
+                            real-world complexities—dynamic obstacles, varying terrains, or weather conditions. Thus,
+                            the
+                            algorithm's performance in these scenarios requires further study.
+                        </li>
+                        <li>
+                            <strong>Sample Impoverishment:</strong> Despite mitigation techniques, sample impoverishment
+                            remains
+                            a persistent challenge. Further innovations in resampling and noise strategies may enhance
+                            long-term
+                            stability.
+                        </li>
+                    </ul>
 
-            <!-- Relation to Probability and Statistics -->
-            <h3>Relation to Probability and Statistics</h3>
-            <p>
-                The simulation illustrates several core concepts in probability and statistics:
-            </p>
-            <ul>
-                <li>
-                    <strong>Random Sampling:</strong>
+                    <!-- Future Work -->
+                    <h4>Future Work</h4>
                     <p>
-                        Particles are sampled from probability distributions to represent the belief about the robot's
-                        state. This stochastic process underpins the algorithm's ability to handle uncertainty.
+                        Several avenues exist to expand and refine this project:
                     </p>
-                </li>
-                <li>
-                    <strong>Probability Distributions:</strong>
+                    <ul>
+                        <li>
+                            <strong>Comparative Analysis:</strong> Implementing and comparing AMCL against other
+                            localization
+                            methods—such as Extended Kalman Filters, Particle Filters without adaptivity, or Grid-based
+                            approaches—could provide insights into their relative strengths and weaknesses.
+                        </li>
+                        <li>
+                            <strong>Enhanced Simulation Scenarios:</strong> Introducing dynamic elements, more complex
+                            maps, and
+                            multi-robot interactions would test AMCL's adaptability and reveal strategies for improving
+                            its
+                            resilience.
+                        </li>
+                        <li>
+                            <strong>Advanced Optimization:</strong> Investigating parallel processing, GPU acceleration,
+                            or more
+                            sophisticated sampling methods may improve scalability and maintain real-time performance
+                            under
+                            heavy computational loads.
+                        </li>
+                        <li>
+                            <strong>User Interface and Pedagogy:</strong> Incorporating additional interactive controls,
+                            visualization tools, or explanatory overlays could further enhance the educational value,
+                            helping
+                            learners understand the algorithm's intricacies more intuitively.
+                        </li>
+                    </ul>
                     <p>
-                        The belief is modeled as a probability distribution over the state space. The use of Gaussian
-                        distributions for motion and sensor models reflects common practices in statistical modeling of
-                        noise.
+                        By pursuing these directions, we can deepen our understanding of probabilistic localization and
+                        continue
+                        to refine algorithms that bridge the gap between theoretical concepts and practical robotic
+                        applications.
                     </p>
-                </li>
-                <li>
-                    <strong>Bayesian Inference:</strong>
-                    <p>
-                        The algorithm continuously updates the belief based on new data, embodying Bayesian principles.
-                        It combines prior knowledge with new evidence to refine estimates.
-                    </p>
-                </li>
-                <li>
-                    <strong>Effective Sample Size (ESS):</strong>
-                    <p>
-                        Calculating ESS demonstrates the application of statistical measures to assess the quality of
-                        the particle set and inform resampling decisions.
-                    </p>
-                </li>
-            </ul>
+                </section>
 
-            <!-- Limitations and Challenges -->
-            <h3>Limitations and Challenges</h3>
-            <p>
-                While the simulation effectively demonstrates AMCL, certain limitations and challenges were identified:
-            </p>
-            <ul>
-                <li>
-                    <strong>Computational Constraints:</strong>
-                    <p>
-                        High particle counts can strain computational resources, especially in a web-based environment
-                        like WebGL. This necessitated optimizations and adaptive strategies to maintain performance.
-                    </p>
-                </li>
-                <li>
-                    <strong>Noise Modeling:</strong>
-                    <p>
-                        Accurately modeling motion and sensor noise is crucial for realistic simulation. Simplifications
-                        or inaccuracies in noise parameters can affect the algorithm's behavior.
-                    </p>
-                </li>
-                <li>
-                    <strong>Environmental Complexity:</strong>
-                    <p>
-                        The simulation environment may not capture all complexities of real-world scenarios, such as
-                        dynamic obstacles or varying terrain, limiting the applicability of findings to some extent.
-                    </p>
-                </li>
-                <li>
-                    <strong>Sample Impoverishment:</strong>
-                    <p>
-                        Despite mitigation efforts, sample impoverishment remains a challenge. Overcoming this requires
-                        careful tuning of resampling strategies and noise parameters.
-                    </p>
-                </li>
-            </ul>
 
-            <!-- Future Work -->
-            <h3>Future Work</h3>
-            <p>
-                Potential avenues for extending this project include:
-            </p>
-            <ul>
-                <li>
-                    <strong>Implementing Additional Algorithms:</strong>
+                <!-- Conclusion Section -->
+                <section id="conclusion" class="mb-5">
+                    <h2>Conclusion</h2>
                     <p>
-                        Comparing AMCL with other localization algorithms, such as Extended Kalman Filters or Grid-based
-                        methods, to evaluate their relative performance.
+                        This project presented a comprehensive exploration of Adaptive Monte Carlo Localization (AMCL),
+                        illuminating how probabilistic reasoning and statistical principles can be harnessed to address
+                        the
+                        fundamental problem of localization in robotics. By integrating theoretical foundations with a
+                        practical, interactive simulation, I bridged the gap between abstract concepts and real-world
+                        applications.
                     </p>
-                </li>
-                <li>
-                    <strong>Enhancing the Simulation Environment:</strong>
-                    <p>
-                        Introducing dynamic elements, more complex maps, or multi-robot scenarios to test the algorithm
-                        under varied conditions.
-                    </p>
-                </li>
-                <li>
-                    <strong>Optimizing Performance:</strong>
-                    <p>
-                        Exploring advanced optimization techniques, such as parallel processing or hardware
-                        acceleration, to handle larger particle counts efficiently.
-                    </p>
-                </li>
-                <li>
-                    <strong>User Interface Improvements:</strong>
-                    <p>
-                        Adding more interactive controls, real-time analytics, or educational tools to enhance user
-                        engagement and learning outcomes.
-                    </p>
-                </li>
-            </ul>
-        </section>
 
-        <!-- Conclusion Section -->
-        <section class="mb-5">
-            <h2>Conclusion</h2>
-            <p>
-                This project provided an in-depth exploration of Adaptive Monte Carlo Localization (AMCL) and its
-                application in robot localization. By developing an interactive simulation and examining the algorithm's
-                theoretical foundations, we achieved several key objectives:
-            </p>
-            <ul>
-                <li>
-                    <strong>Understanding AMCL:</strong>
-                    <p>
-                        Gained a comprehensive understanding of how AMCL utilizes probabilistic methods to estimate a
-                        robot's pose within a known environment.
-                    </p>
-                </li>
-                <li>
-                    <strong>Practical Implementation:</strong>
-                    <p>
-                        Successfully implemented the AMCL algorithm in a simulation, overcoming challenges related to
-                        performance and accuracy.
-                    </p>
-                </li>
-                <li>
-                    <strong>Educational Value:</strong>
-                    <p>
-                        Created a tool that effectively demonstrates complex probabilistic concepts in an accessible and
-                        interactive manner, enhancing learning for students and educators.
-                    </p>
-                </li>
-                <li>
-                    <strong>Application of Probability and Statistics:</strong>
-                    <p>
-                        Applied theoretical concepts from probability and statistics, such as Bayesian inference and
-                        random sampling, to solve a real-world problem in robotics.
-                    </p>
-                </li>
-            </ul>
-            <p>
-                The project highlights the critical role of probability and statistics in modern robotics. Localization,
-                a fundamental challenge in robotics, relies heavily on these mathematical principles to handle
-                uncertainty and make informed decisions based on incomplete or noisy data.
-            </p>
-            <p>
-                Through this endeavor, we demonstrated not only the effectiveness of AMCL but also the broader
-                importance of probabilistic algorithms in technology and science. The integration of theory and
-                practical application serves as a valuable educational experience, reinforcing the relevance of
-                statistical methods in solving complex problems.
-            </p>
-            <p>
-                We hope that this project serves as a useful resource for those interested in robotics, localization
-                algorithms, and the practical application of probability and statistics.
-            </p>
+                    <ul>
+                        <li>
+                            <strong>Understanding AMCL:</strong>
+                            <p>
+                                I achieved a deep conceptual understanding of how AMCL leverages Bayesian inference,
+                                random
+                                sampling, and dynamic particle adjustment to estimate a robot's pose with high accuracy,
+                                even
+                                under uncertainty.
+                            </p>
+                        </li>
+                        <li>
+                            <strong>Practical Implementation:</strong>
+                            <p>
+                                Through careful coding, optimization, and iterative refinement, I successfully
+                                implemented AMCL
+                                in a Unity-based simulation. This involved addressing challenges such as performance
+                                bottlenecks, noise modeling, and sample impoverishment.
+                            </p>
+                        </li>
+                        <li>
+                            <strong>Educational Value:</strong>
+                            <p>
+                                The interactive simulation served as a powerful educational tool, helping students and
+                                educators
+                                visualize complex probabilistic processes and understand how theoretical principles
+                                translate
+                                into tangible outcomes.
+                            </p>
+                        </li>
+                        <li>
+                            <strong>Application of Probability and Statistics:</strong>
+                            <p>
+                                By applying concepts from probability and statistics—Bayes' theorem, Gaussian
+                                distributions, and
+                                the Effective Sample Size (ESS)—I demonstrated how mathematical rigor underpins robust
+                                decision-making in robotics.
+                            </p>
+                        </li>
+                    </ul>
 
-            <!-- Acknowledgments (Optional) -->
-            <h3>Acknowledgments</h3>
-            <p>
-                I would like to thank my teacher, Ivan T. Ivanov, for the valuable guidance and resources provided
-                throughout this
-                project.
-            </p>
-        </section>
+                    <p>
+                        This work underscores the central role of probability and statistics in modern robotics.
+                        Localization, a
+                        pivotal challenge in autonomous navigation, cannot be reliably solved without quantitative
+                        models of
+                        uncertainty and sound statistical reasoning. AMCL exemplifies how advanced probabilistic methods
+                        enable
+                        robots to operate effectively in dynamic, noisy, and complex environments.
+                    </p>
+                    <p>
+                        Beyond robotics, this project highlights the broader significance of probabilistic algorithms
+                        across
+                        various scientific and technological domains. By interweaving theory and practice, we have shown
+                        that
+                        what might seem like abstract mathematical constructs can inform, guide, and improve real-world
+                        solutions.
+                    </p>
+                    <p>
+                        I hope this project serves not only as a reference for those interested in AMCL and
+                        localization
+                        algorithms but also as an inspiration for applying probabilistic thinking more broadly. As
+                        robotics and
+                        related fields continue to evolve, the principles explored here will remain central to tackling
+                        the next
+                        generation of challenges in autonomous systems.
+                    </p>
 
-        <!-- References Section -->
-        <section class="mb-5">
-            <h2>References</h2>
-            <p>
-                This section lists all the sources and materials referenced during the development of this project.
-                Proper attribution ensures academic integrity and acknowledges the contributions of prior work.
-            </p>
-            <ul>
-                <li>
-                    Thrun, S., Burgard, W., & Fox, D. (2005). <em>Probabilistic Robotics</em>. The MIT Press.
+                    <!-- Acknowledgments (Optional) -->
+                    <h4>Acknowledgments</h4>
                     <p>
-                        A foundational textbook that covers the principles of probabilistic robotics, including Monte
-                        Carlo Localization (MCL) and particle filters.
+                        I would like to express my sincere gratitude to my teacher, Ivan T. Ivanov, for providing
+                        valuable
+                        guidance, insights, and resources throughout the duration of this project. Their expertise and
+                        support
+                        greatly enhanced the quality of this work.
                     </p>
-                </li>
-                <li>
-                    Dieter Fox (1999). <em>Monte Carlo Localization: Efficient Position Estimation for Mobile
-                        Robots</em>. Proceedings of the National Conference on Artificial Intelligence (AAAI).
-                    <p>
-                        This paper introduces Monte Carlo Localization and its application to mobile robots.
-                    </p>
-                </li>
-                <li>
-                    LaValle, S. M. (2006). <em>Planning Algorithms</em>. Cambridge University Press.
-                    <p>
-                        A comprehensive resource on algorithms for robot planning and control, including localization
-                        techniques.
-                    </p>
-                </li>
-                <li>
-                    MathWorks. (n.d.). <em>Introduction to Bayesian Statistics</em>. Retrieved from:
-                    <a href="https://www.mathworks.com" target="_blank">https://www.mathworks.com</a>
-                    <p>
-                        An accessible guide to Bayesian inference and its applications in various fields, including
-                        robotics.
-                    </p>
-                </li>
-                <li>
-                    Unity Documentation. (n.d.). <em>Unity User Manual</em>. Retrieved from:
-                    <a href="https://docs.unity3d.com" target="_blank">https://docs.unity3d.com</a>
-                    <p>
-                        The official Unity documentation, which provided guidance on implementing the simulation
-                        environment.
-                    </p>
-                </li>
-            </ul>
-            <p>
-                Additional resources, such as lecture notes and online tutorials, were used to supplement these primary
-                references.
-            </p>
-        </section>
+                </section>
 
-        <!-- Appendices Section -->
-        <section class="mb-5">
-            <h2>Appendices</h2>
-            <p>
-                The appendices provide supplementary materials that support the content presented in this project. These
-                materials include additional diagrams, code snippets, and calculations that were referenced or used
-                during the development process.
-            </p>
 
-            <!-- Appendix A: Code Snippets -->
-            <h3>Appendix A: Code Snippets</h3>
-            <p>
-                Below are selected code snippets that illustrate key aspects of the AMCL implementation.
-            </p>
-            <pre>
-<code>
+                <!-- References Section -->
+                <section id="references" class="mb-5">
+                    <h2>References</h2>
+                    <p>
+                        This section lists all sources and materials referenced throughout the development of this
+                        project.
+                        Proper attribution ensures academic integrity and acknowledges the foundational work upon which
+                        this
+                        exploration of AMCL is built.
+                    </p>
+                    <ul>
+                        <li>
+                            Thrun, S., Burgard, W., & Fox, D. (2005). <em>Probabilistic Robotics</em>. The MIT Press.
+                            <p>
+                                A seminal textbook covering probabilistic methods in robotics. Its detailed discussion
+                                of Monte
+                                Carlo Localization (MCL) and particle filters provided theoretical underpinnings for
+                                this
+                                project's implementation.
+                            </p>
+                        </li>
+                        <li>
+                            Fox, D. (1999). <em>Monte Carlo Localization: Efficient Position Estimation for Mobile
+                                Robots</em>.
+                            Proceedings of the National Conference on Artificial Intelligence (AAAI).
+                            <p>
+                                This influential paper introduced Monte Carlo Localization to the robotics community,
+                                outlining
+                                its foundational principles and demonstrating its effectiveness for mobile robots.
+                            </p>
+                        </li>
+                        <li>
+                            LaValle, S. M. (2006). <em>Planning Algorithms</em>. Cambridge University Press.
+                            <p>
+                                A comprehensive resource on planning and decision-making algorithms in robotics. The
+                                sections on
+                                probabilistic methods and localization strategies supported the conceptual framework for
+                                our
+                                simulation.
+                            </p>
+                        </li>
+                        <li>
+                            MathWorks. (n.d.). <em>Introduction to Bayesian Statistics</em>. Retrieved from:
+                            <a href="https://www.mathworks.com" target="_blank">https://www.mathworks.com</a>
+                            <p>
+                                An accessible guide to Bayesian inference and its applications. These materials helped
+                                clarify
+                                the statistical reasoning behind belief updates and the use of Gaussian models for noise
+                                representation.
+                            </p>
+                        </li>
+                        <li>
+                            Unity Documentation. (n.d.). <em>Unity User Manual</em>. Retrieved from:
+                            <a href="https://docs.unity3d.com" target="_blank">https://docs.unity3d.com</a>
+                            <p>
+                                Official Unity documentation that provided technical guidance on implementing the
+                                simulation
+                                environment, including rendering, user interaction, and performance optimization.
+                            </p>
+                        </li>
+                    </ul>
+                    <p>
+                        Additional resources, such as course lecture notes, online tutorials, and research forums,
+                        supplemented
+                        these primary references, ensuring a well-rounded understanding of both the theoretical and
+                        practical
+                        aspects of AMCL.
+                    </p>
+                </section>
+
+                <!-- Appendices Section -->
+                <section id="appendices" class="mb-5">
+                    <h2>Appendices</h2>
+                    <p>
+                        The appendices contain supplementary materials that support and enrich the content presented in
+                        this
+                        project. They offer a deeper technical perspective, clarify mathematical derivations, and
+                        provide
+                        concrete examples that can serve as references for future work.
+                    </p>
+
+                    <!-- Appendix A: Code Snippets -->
+                    <h4>Appendix A: Code Snippets</h4>
+                    <p>
+                        The following code snippet illustrates a key component of the AMCL implementation, focusing on
+                        particle
+                        weight calculation. By examining this function, readers can better understand how sensor data is
+                        integrated into the belief update process.
+                    </p>
+                    <pre><code>
 // Example: Particle Weight Calculation
 private void CalculateWeight(float[] robotDistances) {
     float totalLogWeight = float.NegativeInfinity;
@@ -1283,59 +1889,73 @@ private void CalculateWeight(float[] robotDistances) {
         totalLogWeight = LogSum(totalLogWeight, logWeight);
     }
 }
-</code>
-    </pre>
+</code></pre>
+                    <p>
+                        This code applies Gaussian likelihoods to sensor measurement errors, adjusting particle weights
+                        accordingly. It exemplifies how theory (Gaussian noise modeling, Bayesian inference) translates
+                        into
+                        practical coding strategies.
+                    </p>
 
-            <!-- Appendix B: Mathematical Derivations -->
-            <h3>Appendix B: Mathematical Derivations</h3>
-            <p>
-                The derivation of the Effective Sample Size (ESS) formula:
-            </p>
-            <div class="text-center">
-                \( ESS = \frac{1}{\sum_{i=1}^M \left( w_t^{[i]} \right)^2 } \)
-            </div>
-            <p>
-                Here, \( w_t^{[i]} \) represents the normalized weight of the \( i \)-th particle. The ESS quantifies
-                the diversity of the particle set, with lower values indicating a higher likelihood of particle
-                degeneracy.
-            </p>
+                    <!-- Appendix B: Mathematical Derivations -->
+                    <h4>Appendix B: Mathematical Derivations</h4>
+                    <p>
+                        The Effective Sample Size (ESS) is a critical metric for assessing particle diversity. Its
+                        derivation
+                        highlights how statistical measures guide decision-making within the AMCL algorithm:
+                    </p>
+                    <div class="text-center">
+                        \( ESS = \frac{1}{\sum_{i=1}^M (w_t^{[i]})^2} \)
+                    </div>
+                    <p>
+                        Here, \( w_t^{[i]} \) are normalized particle weights. A low ESS value signals that the particle
+                        set is
+                        dominated by a few high-weight particles, indicating the need for resampling. This derivation
+                        underscores how mathematical rigor underpins algorithmic adaptations.
+                    </p>
 
-            <!-- Appendix C: Additional Diagrams -->
-            <h3>Appendix C: Additional Diagrams</h3>
-            <p>
-                Below is an additional diagram illustrating the resampling step in the particle filter:
-            </p>
-            <div class="text-center">
-                <img src="images/resampling_step.png" alt="Resampling Step Diagram"
-                    style="max-width: 100%; height: auto;">
-            </div>
-            <p>
-                This diagram shows how particles with higher weights are more likely to be selected during the
-                resampling process, leading to a new set of particles that better represent the belief distribution.
-            </p>
+                    <!-- Appendix C: Additional Diagrams -->
+                    <h4>Appendix C: Additional Diagrams</h4>
+                    <p>
+                        The resampling step is central to maintaining a representative particle set. Although omitted in
+                        the
+                        main text, the following conceptual diagram (if available) would illustrate how high-weight
+                        particles
+                        are more likely to be selected, ensuring that the resulting set better approximates the
+                        underlying
+                        probability distribution.
+                    </p>
+                    <p>
+                        By visualizing this process, readers can gain an intuitive grasp of how resampling prevents the
+                        distribution from collapsing and maintains a balanced exploration of the state space.
+                    </p>
 
-            <!-- Appendix D: Simulation Settings -->
-            <h3>Appendix D: Simulation Settings</h3>
-            <p>
-                Default parameters used in the simulation:
-            </p>
-            <ul>
-                <li><strong>Initial Particle Count:</strong> 300</li>
-                <li><strong>Sensor Variance:</strong> 10.0</li>
-                <li><strong>Position Noise Standard Deviation:</strong> 0.1</li>
-                <li><strong>Orientation Noise Standard Deviation:</strong> 1.0</li>
-                <li><strong>Effective Sample Size (ESS) Threshold:</strong> 0.5</li>
-            </ul>
-            <p>
-                These settings can be adjusted through the user interface to explore their effects on localization
-                accuracy and performance.
-            </p>
-        </section>
+                    <!-- Appendix D: Simulation Settings -->
+                    <h4>Appendix D: Simulation Settings</h4>
+                    <p>
+                        The table below lists the default parameters used in the simulation. Adjusting these values can
+                        provide
+                        insights into how changes in noise levels, initial particle counts, or ESS thresholds affect
+                        localization accuracy and computational performance.
+                    </p>
+                    <ul>
+                        <li><strong>Initial Particle Count:</strong> 300</li>
+                        <li><strong>Sensor Variance:</strong> 10.0</li>
+                        <li><strong>Position Noise Standard Deviation:</strong> 0.1</li>
+                        <li><strong>Orientation Noise Standard Deviation:</strong> 1.0</li>
+                        <li><strong>ESS Threshold:</strong> 0.5</li>
+                    </ul>
+                    <p>
+                        Experimenting with these parameters allows learners to directly observe AMCL's adaptability and
+                        the
+                        balance between accuracy, convergence speed, and computational demands.
+                    </p>
+                </section>
 
-        <!-- Additional Sections -->
-        <!-- Add more sections as needed -->
-    </main>
 
+            </main>
+        </div>
+    </div>
     <!-- Footer -->
     <footer class="bg-primary text-white text-center py-3">
         <p>&copy; 2024 Sohaib Kaidali. All rights reserved.</p>
