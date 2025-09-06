@@ -7,8 +7,8 @@
 
 An interactive Unity-based simulation that visualizes the Adaptive Monte Carlo Localization (AMCL) algorithm for mobile robot localization.
 
-[![AMCL Simulation GIF](./Assets/explorer_9vpg5Aqqla.gif)](https://kaidalisohaib.github.io/AMCL-Visualization/simulation.html)
-![](./Assets/zen_AcLimNhrsH.png)
+[![AMCL Simulation GIF](https://raw.githubusercontent.com/kaidalisohaib/AMCL-Visualization/refs/heads/main/Assets/explorer_9vpg5Aqqla.gif)](https://kaidalisohaib.github.io/AMCL-Visualization/simulation.html)
+![](https://raw.githubusercontent.com/kaidalisohaib/AMCL-Visualization/refs/heads/main/Assets/zen_AcLimNhrsH.png)
 
 ## Table of Contents
 
